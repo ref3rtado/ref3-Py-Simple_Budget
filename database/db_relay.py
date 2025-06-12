@@ -43,27 +43,28 @@ def check_database_exists() -> Union[bool, str]:
     If the file exists and contains a valid path, returns the path as a string.
     If the file does not exist or the path is "None" returns False.
     """
+    p = Path(__file__).parent.resolve()
+    json_path = p.joinpath('db_location.json')
+    clogger.info(json_path)
     try:
-        with open('db_location.json', 'r') as f:
+        with open(json_path, 'r') as f:
             db_info = json.load(f)
             db_path = db_info.get('database_path')
-            if db_path == "None":
-                return False
-            else:
-                # TODO: Look for a db.json file at the specified path
-                return "I'm a path"
+            clogger.info(f"Database path from json: {db_path}")
+            return True, db_path
     except FileNotFoundError:
         clogger.error("db_location.json file not found. ")
         flogger.exception("FileNotFoundError: db_location.json not found.")
-        return False
+        return False, False
 
 
-def setup_database(db_path: str, json_exists=None) -> None:
+def setup_database(db_path=None, json_exists=False) -> None:
     """
     Sets up the database at the specified path.
     The path should be obtained from user input, or they can directly modify the db_location.json file.
     """
     if json_exists:
+        print("Added path: ", db_path)
         pass
     else:
         # Create the json file with the specified path
