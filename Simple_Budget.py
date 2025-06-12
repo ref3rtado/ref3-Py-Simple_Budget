@@ -10,3 +10,28 @@
 #### On "1"
 ##### Prompt for amount, optional description, and date
 ###### On enter, print something like "Transaction added" /n "Current Balance: $X.XX"
+
+##############################################################################################################################
+
+import database.db_relay as db
+import logging
+
+# Configure logging
+clogger = db.setup_logging(name="SimpleBudgetLogger", level=logging.INFO)
+clogger.info("Starting Simple Budget Application...")
+
+def main():
+    # Main program logic
+    pass
+
+if __name__ == "__main__":
+    # TODO: Decide if create db  function call should be here or in db_relay.py
+    if db.check_database_exists():
+        clogger.info("Database found.")
+        main()
+        pass
+    else:
+        clogger.error("Database not found.")
+        # Get input to tell program how to proceed. 
+        # Function to set up the database and create the database_location.json file
+        pass

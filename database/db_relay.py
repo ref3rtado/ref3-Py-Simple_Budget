@@ -1,3 +1,70 @@
 #TODO: Check for existence of db_location.json file
 ###### If not present, prompt user to create it, then use the specified path to create the database
 #TODO: Import tinyDB 
+##############################################################################################################################
+from tinydb import TinyDB, Query
+import json
+import logging
+import sys
+from pathlib import Path
+from typing import Union
+##############################################################################################################################
+# Configure logging | Used by other modules as well
+def setup_logging(name="default_logger", level=logging.INFO, log_file=None) -> logging.Logger:
+    logger = logging.getLogger(name)
+    logger.setLevel(level)
+
+    if logger.hasHandlers():
+        logger.handlers.clear()
+    
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setLevel(level)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
+
+    if log_file:
+        log_file = Path(log_file)
+        file_handler = logging.FileHandler(log_file)
+        file_handler.setLevel(level)
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
+    
+    return logger
+
+# Module specific logger
+clogger = setup_logging(name="db_relay_logger", level=logging.INFO)
+flogger = setup_logging(name="db_relay_flog", level=logging.DEBUG, log_file='db_relay.log')
+##############################################################################################################################
+
+def check_database_exists() -> Union[bool, str]:
+    """
+    Checks if the database exists by looking for the db_location.json file.
+    If the file exists and contains a valid path, returns the path as a string.
+    If the file does not exist or the path is "None" returns False.
+    """
+    try:
+        with open('db_location.json', 'r') as f:
+            db_info = json.load(f)
+            db_path = db_info.get('database_path')
+            if db_path == "None":
+                return False
+            else:
+                # TODO: Look for a db.json file at the specified path
+                return "I'm a path"
+    except FileNotFoundError:
+        clogger.error("db_location.json file not found. ")
+        flogger.exception("FileNotFoundError: db_location.json not found.")
+        return False
+
+
+def setup_database(db_path: str, json_exists=None) -> None:
+    """
+    Sets up the database at the specified path.
+    The path should be obtained from user input, or they can directly modify the db_location.json file.
+    """
+    if json_exists:
+        pass
+    else:
+        # Create the json file with the specified path
+        pass
