@@ -25,7 +25,6 @@ clogger.info("Starting Simple Budget Application...")
 
 def main(db_path: str = None) -> None:
     # Main program logic
-    print("Welcome to the Simple Budget Application!")
     pass
 
 def existence_check() -> Union[str, Path]:
@@ -37,7 +36,7 @@ def existence_check() -> Union[str, Path]:
     if existence and db_path != "None":
         # db_location.json exists and it's database_path is valid
         clogger.info("Database found.")
-        clogger.info(f"Current database {Path(db_path).name}.")
+        clogger.info(f"Current database: {Path(db_path).name}.")
         return "Launching program...", Path(db_path)
     elif existence:
         # db_location.json exists but it's database_path is "None" or invalid
@@ -52,10 +51,19 @@ def existence_check() -> Union[str, Path]:
         # db_location.json does not exist or is invalid
         clogger.error("db_location.json file not found or invalid.")
         take_action = input("Do you already have a database file? (yes/no): ").strip().lower()
-        if take_action not in ['yes', 'y']:
+        if take_action in ['yes', 'y']:
+            db_path = input("Please provide path to your database file: ").strip()
+            return "Creating db_location.json...", Path(db_path).resolve()
+        else:
+            take_action = input("Do you want to create a new database? (yes/no): ").strip().lower()
+            if take_action in ['yes', 'y']:
+                db_path = input("Please provide the path where you want to create the new database file: ").strip()
+                return "Creating db_location.json...", Path(db_path).resolve()
+            else:
+                clogger.info("User chose not to set up a new database.")
             return "Exiting application without setting up a new database.", None
-        db_path = input("Please provide path to your database file: ").strip()
-        return "Creating db_location.json...", Path(db_path).resolve()
+        
+        
 
 if __name__ == "__main__":
     # TODO: Decide if create db  function call should be here or in db_relay.py

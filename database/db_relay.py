@@ -51,21 +51,34 @@ def check_database_exists() -> Union[bool, str]:
             db_info = json.load(f)
             db_path = db_info.get('database_path')
             clogger.info(f"Database path from json: {db_path}")
-            return True, db_path
+            if Path(db_path).exists():
+                return True, db_path
+            else:
+                raise ValueError("Unable to locate database. The Database path could be invalid or the file does not exist.")
     except FileNotFoundError:
         clogger.error("db_location.json file not found. ")
         flogger.exception("FileNotFoundError: db_location.json not found.")
         return False, False
+    except ValueError as ve:
+        clogger.error(f"ValueError: {ve}")
+        flogger.exception(f"ValueError: {ve}")
+        return True, "None"
 
 
 def setup_database(db_path=None, json_exists=False) -> None:
     """
-    Sets up the database at the specified path.
-    The path should be obtained from user input, or they can directly modify the db_location.json file.
+    Sets up or creates the dabase path in db_location.json.
+    
     """
+    p = Path(__file__).parent.resolve()
+    json_path = p.joinpath('db_location.json')
     if json_exists:
+        with open(json_path, 'w') as f:
+            json.dump({'database_path': str(db_path)}, f, indent=4)
         print("Added path: ", db_path)
-        pass
     else:
         # Create the json file with the specified path
-        pass
+        with open(json_path, 'w') as f:
+            json.dump({'database_path': str(db_path)}, f, indent=4)
+        print("Created db_location.json and added path: ", db_path)
+        
