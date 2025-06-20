@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Union
 ##############################################################################################################################
 # Configure logging | Used by other modules as well
+#TODO: Consider moving this to a separate logging configuration module
 def setup_logging(name="default_logger", level=logging.INFO, log_file=None) -> logging.Logger:
     logger = logging.getLogger(name)
     logger.setLevel(level)
