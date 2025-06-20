@@ -32,6 +32,7 @@ class StartingActions(Enum):
 
 def main(db_path: str = None) -> None:
     # Main program logic
+    
     pass
 
 def existence_check() -> None:
