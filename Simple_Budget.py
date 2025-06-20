@@ -17,12 +17,12 @@ import database.db_relay as db
 import logging
 import sys
 from pathlib import Path
-from typing import Union
 from enum import Enum
-
-# Configure logging
-clogger = db.setup_logging(name="SimpleBudgetLogger", level=logging.INFO)
-clogger.info("Starting Simple Budget Application...")
+##############################################################################################################################
+from log.LogSetup import setup_logging
+clogger = setup_logging(name="SimpleBudgetLogger", level=logging.INFO)
+flogger = setup_logging(name="SimpleBudget", level=logging.DEBUG, log_file='Simple_Budget_Log.log')
+##############################################################################################################################
 
 class StartingActions(Enum):
     LAUNCH_PROGRAM: str = "Launching program..."

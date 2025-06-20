@@ -9,33 +9,9 @@ import sys
 from pathlib import Path
 from typing import Union
 ##############################################################################################################################
-# Configure logging | Used by other modules as well
-#TODO: Consider moving this to a separate logging configuration module
-def setup_logging(name="default_logger", level=logging.INFO, log_file=None) -> logging.Logger:
-    logger = logging.getLogger(name)
-    logger.setLevel(level)
-
-    if logger.hasHandlers():
-        logger.handlers.clear()
-    
-    console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setLevel(level)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    console_handler.setFormatter(formatter)
-    logger.addHandler(console_handler)
-
-    if log_file:
-        log_file = Path(log_file)
-        file_handler = logging.FileHandler(log_file)
-        file_handler.setLevel(level)
-        file_handler.setFormatter(formatter)
-        logger.addHandler(file_handler)
-    
-    return logger
-
-# Module specific logger
+from log.LogSetup import setup_logging
 clogger = setup_logging(name="db_relay_logger", level=logging.INFO)
-flogger = setup_logging(name="db_relay_flog", level=logging.DEBUG, log_file='db_relay.log')
+flogger = setup_logging(name="db_relay", level=logging.DEBUG, log_file='Simple_Budget_Log.log')
 ##############################################################################################################################
 
 def check_database_exists() -> Union[bool, str]:
