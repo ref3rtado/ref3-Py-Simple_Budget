@@ -18,6 +18,8 @@ import logging
 import sys
 from pathlib import Path
 from enum import Enum
+from schema.ui_prompts import MainMenuOptions as main_menu
+
 ##############################################################################################################################
 from log.LogSetup import setup_logging
 clogger = setup_logging(name="SimpleBudgetLogger", level=logging.INFO)
@@ -31,9 +33,26 @@ class StartingActions(Enum):
     EXIT_WITHOUT_SETUP: str = "Exiting application without setting up a new database."
 
 def main(db_path: str = None) -> None:
-    # Main program logic
-    
-    pass
+    main_menu.print_menu(self=True)
+    action = int(input("Select an option: ").strip())
+    match action:
+        case main_menu.ADD_TRANSACTION.value:
+            print("Add Transaction selected.")
+        case main_menu.VIEW_TRANSACTIONS.value:
+            print("View Transactions selected.")
+        case main_menu.VIEW_BALANCE.value:
+            print("View Balance selected.")
+        case main_menu.VIEW_HISTORY.value:
+            print("View History selected.")
+        case main_menu.MODIFY_BUDGET.value:
+            print("Modify Budget selected.")
+        case main_menu.MODIFY_CATEGORIES.value:
+            print("Modify Categories selected.")
+        case main_menu.AUTOMATION_FEATURES.value:
+            print("Automation Features selected. (WIP)")
+        case main_menu.EXIT.value:
+            print("Exiting application.")
+
 
 def existence_check() -> None:
     """
