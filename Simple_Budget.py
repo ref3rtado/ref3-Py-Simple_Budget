@@ -18,7 +18,8 @@ import logging
 import sys
 from pathlib import Path
 from enum import Enum
-from schema.ui_prompts import MainMenuOptions as main_menu
+from schema.ui_prompts import MainMenuOptions as MainMenu
+from schema.ui_prompts import add_transaction_ui_flow as AddTransaction
 
 ##############################################################################################################################
 from log.LogSetup import setup_logging
@@ -33,26 +34,54 @@ class StartingActions(Enum):
     EXIT_WITHOUT_SETUP: str = "Exiting application without setting up a new database."
 
 def main(db_path: str = None) -> None:
-    main_menu.print_menu(self=True)
+    MainMenu.print_menu(self=True)
     action = int(input("Select an option: ").strip())
     match action:
-        case main_menu.ADD_TRANSACTION.value:
-            print("Add Transaction selected.")
-        case main_menu.VIEW_TRANSACTIONS.value:
+        case MainMenu.ADD_TRANSACTION.value:
+            clogger.info("Add Transaction selected.")
+            add_trasaction()
+        case MainMenu.VIEW_TRANSACTIONS.value:
             print("View Transactions selected.")
-        case main_menu.VIEW_BALANCE.value:
+        case MainMenu.VIEW_BALANCE.value:
             print("View Balance selected.")
-        case main_menu.VIEW_HISTORY.value:
+        case MainMenu.VIEW_HISTORY.value:
             print("View History selected.")
-        case main_menu.MODIFY_BUDGET.value:
+        case MainMenu.MODIFY_BUDGET.value:
             print("Modify Budget selected.")
-        case main_menu.MODIFY_CATEGORIES.value:
+        case MainMenu.MODIFY_CATEGORIES.value:
             print("Modify Categories selected.")
-        case main_menu.AUTOMATION_FEATURES.value:
+        case MainMenu.AUTOMATION_FEATURES.value:
             print("Automation Features selected. (WIP)")
-        case main_menu.EXIT.value:
+        case MainMenu.EXIT.value:
             print("Exiting application.")
 
+def add_trasaction() -> None:
+    payload = None #Instantiate a class from db_schema.py to hold the transaction data
+    ui = iter(AddTransaction())
+    print(next(ui))
+    categories = next(ui)  # Get the categories dictionary
+    for category, prompt in categories.items():
+        print(f"{prompt} {category}")
+    action = int(input("Select a category by number: ").strip())
+    selected_category = list(categories.keys())[action - 1] if 0 < action <= len(categories) else None
+    if selected_category:
+        clogger.info(f"User selected category: {selected_category}")
+        # Add category to payload object
+    amount = input(next(ui)).strip()
+    #TODO: If NaN, try stipping the first character (likely a $ sign), then convert to float .2f
+    clogger.info(f"User entered amount: {amount}")
+    description = input(next(ui)).strip()
+    if description:
+        clogger.info(f"User entered description: {description}")
+    else:
+        clogger.info("User did not provide a description, using default.")
+    # TODO: Import datetime
+    date_input = input(next(ui)).strip()
+    if date_input:
+        clogger.info(f"User entered date: {date_input}")
+    else:
+        clogger.info("User did not provide a date, using today's date.")
+    # Send payload to db_relay.py to add the transaction 
 
 def existence_check() -> None:
     """
