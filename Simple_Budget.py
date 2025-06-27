@@ -18,8 +18,10 @@ import logging
 import sys
 from pathlib import Path
 from enum import Enum
+from datetime import date
 from schema.ui_prompts import MainMenuOptions as MainMenu
 from schema.ui_prompts import add_transaction_ui_flow as AddTransaction
+from schema.db_schema import db_payload 
 
 ##############################################################################################################################
 from log.LogSetup import setup_logging
@@ -56,7 +58,6 @@ def main(db_path: str = None) -> None:
             print("Exiting application.")
 
 def add_trasaction() -> None:
-    payload = None #Instantiate a class from db_schema.py to hold the transaction data
     ui = iter(AddTransaction())
     print(next(ui))
     categories = next(ui)  # Get the categories dictionary
@@ -70,17 +71,21 @@ def add_trasaction() -> None:
     amount = input(next(ui)).strip()
     #TODO: If NaN, try stipping the first character (likely a $ sign), then convert to float .2f
     clogger.info(f"User entered amount: {amount}")
+    payload = db_payload(table_name=selected_category, cost=float(amount))
     description = input(next(ui)).strip()
     if description:
         clogger.info(f"User entered description: {description}")
+        payload.description = description
     else:
         clogger.info("User did not provide a description, using default.")
-    # TODO: Import datetime
     date_input = input(next(ui)).strip()
     if date_input:
         clogger.info(f"User entered date: {date_input}")
     else:
+        date_input = date.today().isoformat()
         clogger.info("User did not provide a date, using today's date.")
+    payload.date = date_input
+    clogger.info(f"Payload created: {payload.__dict__}")
     # Send payload to db_relay.py to add the transaction 
 
 def existence_check() -> None:
