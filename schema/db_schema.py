@@ -29,7 +29,7 @@ class db_payload:
         """
         Generates a value semi-unique value that can be used to index specific transactions.
         XXXYYYZZZZ:
-            XXX represents the table; 100 == ALL, Others are index of db_list * 10,000
+            XXX represents the table; 100 == ALL, Others are index of db_list * 100,000
             YYY represents the cost; 001 == $0 - $10, 020 = $200 - $219... 
             ZZZZ represents days since the creation of the database, 
                 9999 states transaction occured before db creation and user chose to not use 0000
@@ -38,6 +38,9 @@ class db_payload:
             Amazon purchase of $219 on 2025-04-09 (input == "N" (don't use creation date)): 1070219999
             Code to search ALL transaction of < $10 on 2026-04-10: 1000010365
         """
+        # TODO: Convert table_name to (index + 1) * 100000
+        # TODO: Convert cost to a 3 digit value based on ranges
+        # TODO: Convert date to a integer representing delta between db creation and transaction date
         pass
         return None  # Placeholder for the actual hash generation logic
 
