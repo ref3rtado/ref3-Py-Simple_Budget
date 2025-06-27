@@ -28,16 +28,15 @@ class db_payload:
     def get_psuedo_hash(table_name: str, cost: float, date: str) -> int:
         """
         Generates a value semi-unique value that can be used to index specific transactions.
-        XXXYYYZZZ:
+        XXXYYYZZZZ:
             XXX represents the table; 100 == ALL, Others are index of db_list * 10,000
             YYY represents the cost; 001 == $0 - $10, 020 = $200 - $219... 
-            ZZZ represents a delta range between date of transaction and date of most recent db cycle.
-                If the transaction occured before the last db cycle, it will be 
-                400 + (years since cycle * 100) + months since cycle.
-        Examples with last db cycle on 2025-04-10:
-            Grocery transaction of $50 on 2025-04-11: 101005030
-            Amazon purchase of $219 on 2025-04-09 (One day before cycle): 107021400
-            Code to search ALL transaction of < $10 on 2025-04-11: 100001030
+            ZZZZ represents days since the creation of the database, 
+                9999 states transaction occured before db creation and user chose to not use 0000
+        Examples with db creation of 2025-04-10:
+            Grocery transaction of $50 on 2025-05-11: 1010050031
+            Amazon purchase of $219 on 2025-04-09 (input == "N" (don't use creation date)): 1070219999
+            Code to search ALL transaction of < $10 on 2026-04-10: 1000010365
         """
         pass
         return None  # Placeholder for the actual hash generation logic
