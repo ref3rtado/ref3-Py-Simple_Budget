@@ -2,7 +2,7 @@
 ###### If not present, prompt user to create it, then use the specified path to create the database
 #TODO: Import tinyDB 
 ##############################################################################################################################
-from tinydb import TinyDB, Query
+from tinydb import TinyDB, Query as db
 import json
 import logging
 import sys
@@ -29,27 +29,27 @@ def check_database_exists() -> Union[bool, str]:
             db_path = db_info.get('database_path')
             clogger.info(f"Database path from json: {db_path}")
             if Path(db_path).exists():
-                return True, db_path
+                return True, db_path, True 
             else:
                 raise ValueError("Unable to locate database. The Database path could be invalid or the file does not exist.")
     except FileNotFoundError:
         clogger.error("db_location.json file not found. ")
         flogger.exception("FileNotFoundError: db_location.json not found.")
-        return False, False
+        return False, "None", False,
     except ValueError as ve:
         clogger.error(f"ValueError: {ve}")
         flogger.exception(f"ValueError: {ve}")
-        return True, "None"
+        return True, db_path if db_path else "None", False
 
 
-def setup_database(db_path=None, json_exists=False) -> None:
+def setup_database(db_path=None, location_exists=False) -> None:
     """
     Sets up or creates the dabase path in db_location.json.
     
     """
     p = Path(__file__).parent.resolve()
     json_path = p.joinpath('db_location.json')
-    if json_exists:
+    if location_exists:
         with open(json_path, 'w') as f:
             json.dump({'database_path': str(db_path)}, f, indent=4)
         print("Added path: ", db_path)
@@ -58,4 +58,5 @@ def setup_database(db_path=None, json_exists=False) -> None:
         with open(json_path, 'w') as f:
             json.dump({'database_path': str(db_path)}, f, indent=4)
         print("Created db_location.json and added path: ", db_path)
+    TinyDB(db_path)
         

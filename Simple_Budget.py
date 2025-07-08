@@ -33,6 +33,7 @@ class StartingActions(Enum):
     LAUNCH_PROGRAM: str = "Launching program..."
     ADD_DATABASE_PATH: str = "Adding database path..."
     CREATE_DB_LOCATION: str = "Creating db_location.json..."
+    CREATE_DB: str = "Creating new database at specified path..."
     EXIT_WITHOUT_SETUP: str = "Exiting application without setting up a new database."
 
 def main(db_path: str = None) -> None:
@@ -90,26 +91,33 @@ def add_trasaction() -> None:
 
 def existence_check() -> None:
     """
+    #TODO: Refactor using ui_prompts.py
     Checks if the database exists by looking for the db_location.json file then tells take_starting_action how to proceed.
     If the file exists and contains a valid path, it tells the take_starting_action function to launch the program.
     """
-    existence, db_path = db.check_database_exists()
-    if existence and db_path != "None":
+    json_existence, db_path, db_existence = db.check_database_exists()
+    if json_existence and db_existence and db_path != "None":
         # db_location.json exists and it's database_path is valid
         clogger.info("Database found.")
         clogger.info(f"Current database: {Path(db_path).name}.")
         take_starting_action(StartingActions.LAUNCH_PROGRAM, Path(db_path))
-    elif existence:
+    elif json_existence and not db_existence:
         # db_location.json exists but it's database_path is "None" or invalid
         clogger.warning("Database location not set or is invalid.")
         clogger.info(f"Current database path is {db_path}.")
-        take_action = input("Do you want to specify the path? (yes/no): ").strip().lower()
-        if take_action not in ["yes", "y"]:
-            take_starting_action(StartingActions.EXIT_WITHOUT_SETUP, None)
-        db_path = input("Input the full path to your database file: ").strip()
-        take_starting_action(StartingActions.ADD_DATABASE_PATH, Path(db_path))
+        if db_path.split('/')[-1] == "None": 
+            # db_location.json exists but database_path is "None"
+            take_action = input("Do you want to specify the path? (yes/no): ").strip().lower()
+            if take_action not in ["yes", "y"]:
+                take_starting_action(StartingActions.EXIT_WITHOUT_SETUP, None)
+            else:    
+                db_path = input("Input the full path to your database file (Include db file in path): ").strip()
+                take_starting_action(StartingActions.ADD_DATABASE_PATH, Path(db_path))
+        else:
+            take_action = input("Do you want to create a new database at this path? (yes/no): ").strip().lower()
+            if take_action in ['yes', 'y']:
+                take_starting_action(StartingActions.CREATE_DB, Path(db_path))       
     else:
-        # db_location.json does not exist or is invalid
         clogger.error("db_location.json file not found or invalid.")
         take_action = input("Do you already have a database file? (yes/no): ").strip().lower()
         if take_action in ['yes', 'y']:
@@ -123,7 +131,7 @@ def existence_check() -> None:
             else:
                 clogger.info("User chose not to set up a new database.")
                 take_starting_action(StartingActions.EXIT_WITHOUT_SETUP, None)
-        
+                   
 def take_starting_action(action: StartingActions, db_path) -> None:
     """
     Executes the action based on the StartingActions enum.
@@ -133,10 +141,13 @@ def take_starting_action(action: StartingActions, db_path) -> None:
         main(db_path)
     elif action == StartingActions.ADD_DATABASE_PATH:
         print(f"{action.value}")
-        db.setup_database(db_path, json_exists=True)
+        db.setup_database(db_path, location_exists=True)
     elif action == StartingActions.CREATE_DB_LOCATION:
         print(f"{action.value}")
         db.create_db_location(db_path)
+    elif action == StartingActions.CREATE_DB:
+        print(f"{action.value}")
+        db.setup_database(db_path, location_exists=True)
     elif action == StartingActions.EXIT_WITHOUT_SETUP:
         print(f"{action.value}")
         sys.exit(0)
@@ -146,3 +157,4 @@ def take_starting_action(action: StartingActions, db_path) -> None:
 if __name__ == "__main__":
     # Check for database existence and take appropriate action
     existence_check()
+
