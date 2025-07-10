@@ -31,7 +31,7 @@ class MainMenuOptions(Enum):
 
 class RotateDB_UI(Enum):
     """
-    Dynamic iterable [list{dict}].
+    UI PROMPTS
     Guides the user through the process of rotating the database.
     """
     # Check existence of archive folder path
@@ -39,16 +39,10 @@ class RotateDB_UI(Enum):
     # Else, prompt user to create it
     START = "-ROTATE DB FILE-\nChecking for existing archive folder..."
     FOLDER_EXISTS = "Archive folder exists at: {archive_path}"
-    FOLDER_MISSING = "Archive folder does not exist. Create it? (yes/no): "
+    FOLDER_MISSING = "Archive folder not specified. Would you like to specify and/or create a new archive location? (yes/no): "
     GET_USER_PATH = "Enter that path to store the archive: "
     FOLDER_CREATED = "Archive folder created at: {archive_path}"
     CONFIRM_ROTATION = "Continue with rotating the database? (yes/no): "
-
-    def print_ui(self, prompt, **kwargs):
-        if kwargs:
-            print(self.value.format(**kwargs))
-        else:
-            print(self.value)
 
 def get_current_tables() -> list:
     """

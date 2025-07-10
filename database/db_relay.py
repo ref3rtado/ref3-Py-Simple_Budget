@@ -13,7 +13,7 @@ from schema.db_schema import db_list
 import schema.ui_prompts as ui
 ##############################################################################################################################
 from log.LogSetup import setup_logging
-clogger = setup_logging(name="db_relay_logger", level=logging.INFO)
+clogger = setup_logging(name="db_relay_logger", level=logging.DEBUG)
 flogger = setup_logging(name="db_relay", level=logging.DEBUG, log_file='Simple_Budget_Log.log')
 ##############################################################################################################################
 class InitializeNewDatabase:
@@ -84,15 +84,28 @@ def setup_database(db_path=None, location_exists=False) -> None:
         print("Created db_location.json and added path: ", db_path)
     InitializeNewDatabase(db_path, tables=db_list)
 
-def rotate_database(db_path: str=None, archive_path: str=None) -> None:
-    locations = Path(__file__).parent.resolve()
+def rotate_database(db_path: str=None, archive_path: str=None, add_path_to_json: str=None) -> str:
+    locations = Path(__file__).parent.joinpath("db_location.json").resolve()
     clogger.debug(f"Locations: {locations}")
     clogger.debug(f"Archive path: {archive_path}")
     clogger.debug(f"Database path: {db_path}")
-    if not archive_path:
-        locations = locations.joinpath('db_location.json')
-        clogger.debug(f"Locations file: {locations}")
-    if not db_path and not archive_path:   
+
+    if add_path_to_json:
+        with open(locations, 'w') as f:
+            json.dump({"database_path": str(db_path), "archive_path": str(add_path_to_json)}, f, indent=4)
+            clogger.debug(f"Added archive path to db_location.json: {add_path_to_json}")
+        with open(locations, 'r') as f:
+            paths = json.load(f)
+            db_path = paths.get('database_path')
+            archive_path = paths.get('archive_path')
+        archive_path = Path(archive_path).resolve()
+        if not archive_path.exists():
+            archive_path.mkdir(parents=True, exist_ok=True)
+            clogger.info(f"Archive folder created at: {archive_path}")
+            return db_path, archive_path
+
+    if not db_path and not archive_path:
+        clogger.debug(f"Locations file: {locations}")  
         with open(locations, 'r') as f:
             paths = json.load(f)
             db_path = paths.get('database_path')
@@ -100,18 +113,22 @@ def rotate_database(db_path: str=None, archive_path: str=None) -> None:
         clogger.info(db_path)
         clogger.info(archive_path)
         return db_path, archive_path
-
+    
+    db_path = Path(db_path).resolve()
+    archive_path = Path(archive_path).resolve()
     if not archive_path.exists():
         archive_path.mkdir(parents=True, exist_ok=True)
         clogger.info(f"Archive folder created at: {archive_path}")
+        return db_path, archive_path
     
     # Move the current database to the archive folder
+    '''
     db_file = Path(db_path)
     archived_db_file = p.joinpath(db_file.name)
     db_file.rename(archived_db_file)
     
     clogger.info(f"Database rotated. Archived at: {archived_db_file}")
-    
+    '''
     # Create a new database
     #setup_database(db_path=db_path, location_exists=True)
         

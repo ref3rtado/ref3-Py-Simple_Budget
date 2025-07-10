@@ -26,7 +26,7 @@ from schema.db_schema import db_payload
 
 ##############################################################################################################################
 from log.LogSetup import setup_logging
-clogger = setup_logging(name="SimpleBudgetLogger", level=logging.INFO)
+clogger = setup_logging(name="SimpleBudgetLogger", level=logging.DEBUG)
 flogger = setup_logging(name="SimpleBudget", level=logging.DEBUG, log_file='Simple_Budget_Log.log')
 ##############################################################################################################################
 
@@ -100,15 +100,27 @@ def rotate_database(archive_path) -> None:
     ui = RotateUI
     print(ui.START.value)
     db_path, archive_path = db.rotate_database()
-    if not archive_path:
+    clogger.debug(f"Database path: {db_path}, Archive path: {archive_path}")
+    clogger.debug(type(archive_path))
+    if archive_path == "None":
         take_action = input(ui.FOLDER_MISSING.value).strip().lower()
         if take_action in ['yes', 'y']:
             archive_path = input(ui.GET_USER_PATH.value).strip()
-            db.create_archive_folder(archive_path)
+            try:
+                add_path_to_json = Path(archive_path).joinpath("db_Archive").resolve()
+                clogger.debug(type(archive_path))
+            except Exception as e:
+                clogger.error(f"Error resolving archive path: {e}")
+                print("Invalid path provided. Please try again.")
+                return    
+            db_path, archive_path = db.rotate_database(db_path, archive_path, add_path_to_json)
             print(ui.FOLDER_CREATED.value.format(archive_path=archive_path))
         else:
             clogger.info("User chose not to create an archive folder.")
             return
+    take_action = input(ui.CONFIRM_ROTATION.value).strip().lower()
+    if take_action in ['yes', 'y']:
+        db.rotate_database(db_path, archive_path)
 
 
 def existence_check() -> None:
