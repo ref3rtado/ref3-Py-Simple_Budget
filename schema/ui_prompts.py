@@ -16,8 +16,9 @@ class MainMenuOptions(Enum):
     VIEW_HISTORY = (4, "View historical balances")
     MODIFY_BUDGET = (5, "Modify budget limits")
     MODIFY_CATEGORIES = (6, "Add, rename, or remove budget categories")
-    AUTOMATION_FEATURES = (7, "WIP Automation Features")
-    EXIT = (8, "Exit the application")
+    ROTATE_DB = (7, "Rotate database (Archive current db and create a new one)")
+    AUTOMATION_FEATURES = (8, "PLACEHOLDER Automation Features")
+    EXIT = (9, "Exit the application")
 
     def print_menu(self):
         """ 
@@ -27,6 +28,27 @@ class MainMenuOptions(Enum):
         for option in MainMenuOptions:
             print(f"{option.value}. {option.description}")
         print(f'{"*" * 40}\n')
+
+class RotateDB_UI(Enum):
+    """
+    Dynamic iterable [list{dict}].
+    Guides the user through the process of rotating the database.
+    """
+    # Check existence of archive folder path
+    # If it exists, print path
+    # Else, prompt user to create it
+    START = "-ROTATE DB FILE-\nChecking for existing archive folder..."
+    FOLDER_EXISTS = "Archive folder exists at: {archive_path}"
+    FOLDER_MISSING = "Archive folder does not exist. Create it? (yes/no): "
+    GET_USER_PATH = "Enter that path to store the archive: "
+    FOLDER_CREATED = "Archive folder created at: {archive_path}"
+    CONFIRM_ROTATION = "Continue with rotating the database? (yes/no): "
+
+    def print_ui(self, prompt, **kwargs):
+        if kwargs:
+            print(self.value.format(**kwargs))
+        else:
+            print(self.value)
 
 def get_current_tables() -> list:
     """
@@ -53,4 +75,8 @@ def add_transaction_ui_flow() -> list:
     add_transaction_flow.insert(1, category_dict)
     return add_transaction_flow
 
-        
+
+
+
+
+    

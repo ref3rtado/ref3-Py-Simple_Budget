@@ -21,6 +21,7 @@ from enum import Enum
 from datetime import date
 from schema.ui_prompts import MainMenuOptions as MainMenu
 from schema.ui_prompts import add_transaction_ui_flow as AddTransaction
+from schema.ui_prompts import RotateDB_UI as RotateUI
 from schema.db_schema import db_payload 
 
 ##############################################################################################################################
@@ -53,6 +54,9 @@ def main(db_path: str = None) -> None:
             print("Modify Budget selected.")
         case MainMenu.MODIFY_CATEGORIES.value:
             print("Modify Categories selected.")
+        case MainMenu.ROTATE_DB.value:
+            print("Rotate Database selected.")
+            rotate_database(archive_path="db_Archive")  # Assuming archive_path is defined
         case MainMenu.AUTOMATION_FEATURES.value:
             print("Automation Features selected. (WIP)")
         case MainMenu.EXIT.value:
@@ -88,6 +92,24 @@ def add_trasaction() -> None:
     payload.date = date_input
     clogger.info(f"Payload created: {payload.__dict__}")
     # Send payload to db_relay.py to add the transaction 
+
+def rotate_database(archive_path) -> None:
+    """
+    Rotates the database by archiving the current one and creating a new one.
+    """
+    ui = RotateUI
+    print(ui.START.value)
+    db_path, archive_path = db.rotate_database()
+    if not archive_path:
+        take_action = input(ui.FOLDER_MISSING.value).strip().lower()
+        if take_action in ['yes', 'y']:
+            archive_path = input(ui.GET_USER_PATH.value).strip()
+            db.create_archive_folder(archive_path)
+            print(ui.FOLDER_CREATED.value.format(archive_path=archive_path))
+        else:
+            clogger.info("User chose not to create an archive folder.")
+            return
+
 
 def existence_check() -> None:
     """
@@ -153,6 +175,7 @@ def take_starting_action(action: StartingActions, db_path) -> None:
         sys.exit(0)
     else:
         clogger.error("Invalid action specified.")
+
 
 if __name__ == "__main__":
     # Check for database existence and take appropriate action

@@ -8,11 +8,35 @@ import logging
 import sys
 from pathlib import Path
 from typing import Union
+from datetime import date
+from schema.db_schema import db_list
+import schema.ui_prompts as ui
 ##############################################################################################################################
 from log.LogSetup import setup_logging
 clogger = setup_logging(name="db_relay_logger", level=logging.INFO)
 flogger = setup_logging(name="db_relay", level=logging.DEBUG, log_file='Simple_Budget_Log.log')
 ##############################################################################################################################
+class InitializeNewDatabase:
+    def __init__(self, db_path: str, tables: list = db_list):
+        """
+        Initializes a new database at the specified path.
+        Most often used when the database is rotated.        
+        :param tables: Default tables hardcoded in db_schema.py. User can pass a list of tables to override the defaults.
+        """
+        self.creation_date = date.today().isoformat()
+        self.tables = tables
+        self.db_path = db_path
+        
+        db = TinyDB(self.db_path)
+        db.insert({'creation_date': self.creation_date})
+        for table in self.tables:
+            # Create a new table for each category
+            current_table = db.table(table)
+            current_table.insert({   
+                'table_name': table
+            })
+            clogger.info(f"Table '{table}' created in database at {self.db_path}")
+
 
 def check_database_exists() -> Union[bool, str]:
     """
@@ -58,5 +82,36 @@ def setup_database(db_path=None, location_exists=False) -> None:
         with open(json_path, 'w') as f:
             json.dump({'database_path': str(db_path)}, f, indent=4)
         print("Created db_location.json and added path: ", db_path)
-    TinyDB(db_path)
+    InitializeNewDatabase(db_path, tables=db_list)
+
+def rotate_database(db_path: str=None, archive_path: str=None) -> None:
+    locations = Path(__file__).parent.resolve()
+    clogger.debug(f"Locations: {locations}")
+    clogger.debug(f"Archive path: {archive_path}")
+    clogger.debug(f"Database path: {db_path}")
+    if not archive_path:
+        locations = locations.joinpath('db_location.json')
+        clogger.debug(f"Locations file: {locations}")
+    if not db_path and not archive_path:   
+        with open(locations, 'r') as f:
+            paths = json.load(f)
+            db_path = paths.get('database_path')
+            archive_path = paths.get('archive_path')
+        clogger.info(db_path)
+        clogger.info(archive_path)
+        return db_path, archive_path
+
+    if not archive_path.exists():
+        archive_path.mkdir(parents=True, exist_ok=True)
+        clogger.info(f"Archive folder created at: {archive_path}")
+    
+    # Move the current database to the archive folder
+    db_file = Path(db_path)
+    archived_db_file = p.joinpath(db_file.name)
+    db_file.rename(archived_db_file)
+    
+    clogger.info(f"Database rotated. Archived at: {archived_db_file}")
+    
+    # Create a new database
+    #setup_database(db_path=db_path, location_exists=True)
         
