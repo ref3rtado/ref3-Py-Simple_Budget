@@ -2,7 +2,7 @@
 ###### If not present, prompt user to create it, then use the specified path to create the database
 #TODO: Import tinyDB 
 ##############################################################################################################################
-from tinydb import TinyDB, Query as db
+from tinydb import TinyDB, Query
 import json
 import logging
 import sys
@@ -11,6 +11,7 @@ from typing import Union
 from datetime import date
 from schema.db_schema import db_list
 import schema.ui_prompts as ui
+import shutil
 ##############################################################################################################################
 from log.LogSetup import setup_logging
 clogger = setup_logging(name="db_relay_logger", level=logging.DEBUG)
@@ -84,7 +85,7 @@ def setup_database(db_path=None, location_exists=False) -> None:
         print("Created db_location.json and added path: ", db_path)
     InitializeNewDatabase(db_path, tables=db_list)
 
-def rotate_database(db_path: str=None, archive_path: str=None, add_path_to_json: str=None) -> str:
+def rotate_database(db_path: str=None, archive_path: str=None, add_path_to_json: str=None) -> None:
     locations = Path(__file__).parent.joinpath("db_location.json").resolve()
     clogger.debug(f"Locations: {locations}")
     clogger.debug(f"Archive path: {archive_path}")
@@ -119,16 +120,16 @@ def rotate_database(db_path: str=None, archive_path: str=None, add_path_to_json:
     if not archive_path.exists():
         archive_path.mkdir(parents=True, exist_ok=True)
         clogger.info(f"Archive folder created at: {archive_path}")
-        return db_path, archive_path
     
     # Move the current database to the archive folder
-    '''
-    db_file = Path(db_path)
-    archived_db_file = p.joinpath(db_file.name)
-    db_file.rename(archived_db_file)
+    clogger.debug(f"Moving database from {db_path} to {archive_path}")
+    current_db = TinyDB(db_path)
+    with current_db as db:
+        default_table = current_db.table('_default')
+        creation_date = default_table.get(doc_id=1).get('creation_date')
+        creation_date = creation_date.replace('-', '_')
+        archive_destination = archive_path.joinpath(f"db_{creation_date}.json")
+    shutil.move(str(db_path), str(archive_destination))
     
-    clogger.info(f"Database rotated. Archived at: {archived_db_file}")
-    '''
     # Create a new database
-    #setup_database(db_path=db_path, location_exists=True)
-        
+    setup_database(db_path=db_path, location_exists=True)
