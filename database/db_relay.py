@@ -18,23 +18,26 @@ clogger = setup_logging(name="db_relay_logger", level=logging.DEBUG)
 flogger = setup_logging(name="db_relay", level=logging.DEBUG, log_file='Simple_Budget_Log.log')
 ##############################################################################################################################
 class InitializeNewDatabase:
-    def __init__(self, db_path: str, tables: list = db_list):
+    def __init__(self, db_path: str, tables: list = db_list, total_budget: float = 0.0):
         """
         Initializes a new database at the specified path.
         Most often used when the database is rotated.        
         :param tables: Default tables hardcoded in db_schema.py. User can pass a list of tables to override the defaults.
         """
         self.creation_date = date.today().isoformat()
+        self.total_budget = total_budget
         self.tables = tables
         self.db_path = db_path
         
         db = TinyDB(self.db_path, sort_keys=True, indent=4, separators=(',', ': '))
         db.insert({'creation_date': self.creation_date})
+        db.insert({'total_budget': self.total_budget})
         for table in self.tables:
             # Create a new table for each category
             current_table = db.table(table)
             current_table.insert({   
-                'table_name': table
+                'table_name': table,
+                'category budget': 0.0
             })
             clogger.info(f"Table '{table}' created in database at {self.db_path}")
 

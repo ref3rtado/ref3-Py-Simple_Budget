@@ -56,7 +56,7 @@ def main(db_path: str = None) -> None:
             print("Modify Categories selected.")
         case MainMenu.ROTATE_DB.value:
             print("Rotate Database selected.")
-            rotate_database(archive_path="db_Archive")  # Assuming archive_path is defined
+            rotate_database(archive_path="db_Archive")
         case MainMenu.AUTOMATION_FEATURES.value:
             print("Automation Features selected. (WIP)")
         case MainMenu.EXIT.value:
