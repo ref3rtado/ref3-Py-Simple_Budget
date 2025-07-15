@@ -28,7 +28,7 @@ class InitializeNewDatabase:
         self.tables = tables
         self.db_path = db_path
         
-        db = TinyDB(self.db_path)
+        db = TinyDB(self.db_path, sort_keys=True, indent=4, separators=(',', ': '))
         db.insert({'creation_date': self.creation_date})
         for table in self.tables:
             # Create a new table for each category
@@ -76,12 +76,12 @@ def setup_database(db_path=None, location_exists=False) -> None:
     json_path = p.joinpath('db_location.json')
     if location_exists:
         with open(json_path, 'w') as f:
-            json.dump({'database_path': str(db_path)}, f, indent=4)
+            json.dump({'database_path': str(db_path), 'archive_path': 'None'}, f, indent=4)
         print("Added path: ", db_path)
     else:
         # Create the json file with the specified path
         with open(json_path, 'w') as f:
-            json.dump({'database_path': str(db_path)}, f, indent=4)
+            json.dump({'database_path': str(db_path), 'archive_path': 'None'}, f, indent=4)
         print("Created db_location.json and added path: ", db_path)
     InitializeNewDatabase(db_path, tables=db_list)
 
