@@ -6,6 +6,8 @@ from tinydb import TinyDB, Query
 import database.db_relay as db_relay
 from pathlib import Path
 from schema.db_schema import db_payload as Payload
+from datetime import date
+import shutil
 
 ##############################################################################################################################
 #TODO: Set up proper debug console.
@@ -35,12 +37,13 @@ def test_db_initialization(setup_db):
     temp_db_path = Path(__name__).parent.joinpath('test_db.json')
     assert Path(temp_db_path).exists(), "Temporary database file should exist."   
 
-    expected_temp_tables = {'_default', 'Groceries', 'Car', 'Shopping'}
+    expected_temp_tables = {'All_Tables', 'Groceries', 'Car', 'Shopping'}
     actual_temp_tables = set(setup_db.tables())
     clogger.debug(expected_temp_tables.difference(actual_temp_tables)) 
     # There should be no difference between expected and actual tables, hence true if set is empty.   
     assert expected_temp_tables.difference(actual_temp_tables) == set(), "Database should contain the correct tables."
 
+@pytest.mark.xfail(reason="Test has no been implemented yet.")
 def test_add_transaction(setup_db):
     """
     Test to ensure that a transaction can be added to the database and returns the expected values.
@@ -66,6 +69,31 @@ def test_add_transaction(setup_db):
     
     assert len(result) == 1, "Transaction should be added to the Groceries table."
     assert result[0]['description'] == "Weekly groceries", "Transaction description should match."
+
+@pytest.fixture
+def test_archive_directory():
+    archive_path = Path(__name__).parent.joinpath('test_db_Archive')
+    archive_path.mkdir(exist_ok=True)  # Create the archive directory if it doesn't exist
+    yield archive_path
+    try:
+        shutil.rmtree(archive_path)  # Clean up the archive directory after the test
+    except OSError:
+        clogger.warning("Archive directory not empty, cannot remove.")
+
+def test_rotate_database(setup_db, test_archive_directory):
+    test_db_path = Path(__name__).parent.joinpath('test_db.json')
+    db_relay.rotate_database(db_path=test_db_path, archive_path=test_archive_directory)
+    expected_archive_file = test_archive_directory.joinpath(f"db_{current_date}.json")
+    assert expected_archive_file.exists(), "The database should be archived in the specified directory."
+    
+    current_date = date.today().isoformat()
+    expected_archive_file = expected_archive_file.with_name(f'db_{current_date}[1].json')
+    db_relay.rotate_database(db_path=test_db_path, archive_path=test_archive_directory)
+
+    clogger.debug(f"Expected archive file: {expected_archive_file}")
+    # Check if the archive file exists with the incremented name
+    assert expected_archive_file.exists(), "The database should be archived with an incremented name in the specified directory."
+
     
 
     

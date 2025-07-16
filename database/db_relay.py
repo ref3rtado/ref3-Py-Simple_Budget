@@ -30,6 +30,7 @@ class InitializeNewDatabase:
         self.db_path = db_path
         
         db = TinyDB(self.db_path, sort_keys=True, indent=4, separators=(',', ': '))
+        db.default_table_name = 'All_Tables'
         db.insert({'creation_date': self.creation_date})
         db.insert({'total_budget': self.total_budget})
         for table in self.tables:
@@ -128,10 +129,20 @@ def rotate_database(db_path: str=None, archive_path: str=None, add_path_to_json:
     clogger.debug(f"Moving database from {db_path} to {archive_path}")
     current_db = TinyDB(db_path)
     with current_db as db:
-        default_table = current_db.table('_default')
+        default_table = current_db.table('All_Tables')
         creation_date = default_table.get(doc_id=1).get('creation_date')
         creation_date = creation_date.replace('-', '_')
         archive_destination = archive_path.joinpath(f"db_{creation_date}.json")
+        if archive_destination.exists():
+            existing_file_name = archive_destination.stem
+            if existing_file_name[-1] == ']':
+                i = existing_file_name.rfind('[')
+                new_file_name = f"{existing_file_name[:i]}[{int(existing_file_name[i+1:]) + 1}]"
+                existing_file_name = new_file_name
+            else:
+                existing_file_name = f"{existing_file_name}[1]"
+            archive_destination = archive_destination.with_name(existing_file_name + archive_destination.suffix)
+        clogger.debug(f"Archive destination: {archive_destination}")
     shutil.move(str(db_path), str(archive_destination))
     
     # Create a new database
