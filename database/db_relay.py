@@ -136,3 +136,6 @@ def rotate_database(db_path: str=None, archive_path: str=None, add_path_to_json:
     
     # Create a new database
     setup_database(db_path=db_path, location_exists=True)
+
+def add_transaction(payload: object, db_path: str) -> None:
+    pass

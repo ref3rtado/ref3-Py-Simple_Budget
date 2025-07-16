@@ -1,3 +1,4 @@
+from tinydb import TinyDB, Query
 from enum import Enum, auto
 from datetime import date
 
@@ -44,15 +45,17 @@ class RotateDB_UI(Enum):
     FOLDER_CREATED = "Archive folder created at: {archive_path}"
     CONFIRM_ROTATION = "Continue with rotating the database? (yes/no): "
 
-def get_current_tables() -> list:
+def get_current_tables(db_path) -> list:
     """
     Grabs the current tables from the database and returns them as a list.
     Currently using a dummy list.
     """
-    dummy_tables = ["Grocery", "Utilities", "Entertainment", "Transportation"]
-    return dummy_tables
+    db = TinyDB(db_path)
+    existing_tables = db.tables()
+    db.close()
+    return existing_tables
 
-def add_transaction_ui_flow() -> list:  
+def add_transaction_ui_flow(db_path) -> list:  
     """
     Dynamic iterable [list{dict}].
     Guides the user through the process of adding a transaction.
@@ -62,7 +65,7 @@ def add_transaction_ui_flow() -> list:
         'Enter the cost of the trasaction | "q" to cancel: ',
         'Enter a description for the transaction (optional) | "q" to cancel: ',
         'Enter the date of the transaction (YYYY-MM-DD) or press Enter for today | "q" to cancel: ']
-    categories = get_current_tables()
+    categories = get_current_tables(db_path)
     category_dict = {}
     for i, category in enumerate(categories, start=1):
         category_dict[category] = f'{i}. '

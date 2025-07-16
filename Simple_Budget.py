@@ -43,7 +43,7 @@ def main(db_path: str = None) -> None:
     match action:
         case MainMenu.ADD_TRANSACTION.value:
             clogger.info("Add Transaction selected.")
-            add_trasaction()
+            add_trasaction(db_path)
         case MainMenu.VIEW_TRANSACTIONS.value:
             print("View Transactions selected.")
         case MainMenu.VIEW_BALANCE.value:
@@ -62,8 +62,8 @@ def main(db_path: str = None) -> None:
         case MainMenu.EXIT.value:
             print("Exiting application.")
 
-def add_trasaction() -> None:
-    ui = iter(AddTransaction())
+def add_trasaction(db_path) -> None:
+    ui = iter(AddTransaction(db_path))
     print(next(ui))
     categories = next(ui)  # Get the categories dictionary
     for category, prompt in categories.items():
@@ -106,7 +106,7 @@ def rotate_database(archive_path) -> None:
         take_action = input(ui.FOLDER_MISSING.value).strip().lower()
         if take_action in ['yes', 'y']:
             archive_path = input(ui.GET_USER_PATH.value).strip()
-            try:
+            try: #TODO: Check if user path.name contains substring 'archive'. If no, joinpath with default "db_Archive"
                 add_path_to_json = Path(archive_path).joinpath("db_Archive").resolve()
                 clogger.debug(type(archive_path))
             except Exception as e:
