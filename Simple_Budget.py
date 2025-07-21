@@ -23,7 +23,8 @@ import json
 from schema.ui_prompts import MainMenuOptions as MainMenu
 from schema.ui_prompts import add_transaction_ui_flow as AddTransaction
 from schema.ui_prompts import RotateDB_UI as RotateUI
-from schema.db_schema import db_payload 
+from schema.db_schema import db_payload as db_payload
+
 
 ##############################################################################################################################
 from log.LogSetup import setup_logging
@@ -47,7 +48,7 @@ def take_starting_action(action: StartingActions, db_path, archive_path) -> None
         main(db_path)
     elif action == StartingActions.ADD_PATH_TO_JSON:
         print(f"{action.value}")
-        db.setup_database(db_path, archive_path)
+        db.setup_location_json(db_path, archive_path)
     elif action == StartingActions.CREATE_DB_LOCATION:
         print(f"{action.value}")
         db.create_db_location(db_path)
@@ -67,11 +68,15 @@ def existence_check() -> None:
     If the file exists and contains a valid path, it tells the take_starting_action function to launch the program.
     """
     db_path, archive_path = db.check_database_exists()
-    if not db_path or db_path == "None":
-        take_action = input(f'Database location not specified or invalid. Would you toe enter a path? (yes/no): ').strip().lower()
+    if db_path == "None":
+        take_action = input(f'Database path hasn\'t been setup yet. Do you want to specify the path? (yes/no): ').strip().lower()
         if take_action in ['yes', 'y']:
             db_path = input("Enter the path to the database file: ").strip()
             action = StartingActions.ADD_PATH_TO_JSON
+            if archive_path == "None":
+                take_action = input(f'Archive directory not specified. Would you like to enter a path?(yes/no): ').strip().lower()
+                if take_action in ['yes', 'y']:
+                    archive_path = input("Enter the path to the archive folder: ").strip()
             take_starting_action(action, db_path, archive_path)
     if not archive_path or archive_path == "None":
         take_action = input(f'Archive directory not specified. Would you like to enter a path?(yes/no): ').strip().lower()
@@ -137,34 +142,20 @@ def add_trasaction(db_path) -> None:
     clogger.info(f"Payload created: {payload.__dict__}")
     # Send payload to db_relay.py to add the transaction 
 
-def rotate_database() -> None:
+def rotate_database(db_path, archive_path) -> None:
     """
     Rotates the database by archiving the current one and creating a new one.
     """
     ui = RotateUI
     print(ui.START.value)
-    try:
-        with open (Path(__file__).parent.joinpath("db_location.json"), 'r') as f:
-            paths = json.load(f)
-            db_path = paths.get('database_path', db_path)
-            archive_path = paths.get('archive_path', archive_path)
-    except FileNotFoundError:
-        clogger.error("db_location.json file not found.")
-        print("Database location file not found. Please create it first.")
-        return
     clogger.debug(f"Database path: {db_path}, Archive path: {archive_path}")
     if archive_path == "None":
+        print("An archive folder is required but not specified.")
         take_action = input(ui.FOLDER_MISSING.value).strip().lower()
         if take_action in ['yes', 'y']:
             archive_path = input(ui.GET_USER_PATH.value).strip()
-            try:
-                add_path_to_json = Path(archive_path).joinpath("db_Archive").resolve()
-                clogger.debug(f"Archive path resolved: {add_path_to_json}")
-            except Exception as e:
-                clogger.error(f"Error resolving archive path: {e}")
-                print("Invalid path provided. Please try again.")
-                return
-            db_path, archive_path = db.rotate_database(db_path, archive_path, add_path_to_json)
+            db.setup_location_json(db_path=db_path, archive_path=archive_path)
+            db_path, archive_path = db.rotate_database(db_path, archive_path)
             print(ui.FOLDER_CREATED.value.format(archive_path=archive_path))
         else:
             clogger.info("User chose not to create an archive folder.")
@@ -172,33 +163,6 @@ def rotate_database() -> None:
         take_action = input(ui.CONFIRM_ROTATION.value).strip().lower()
         if take_action in ['yes', 'y']:
             db.rotate_database(db_path, archive_path)
-    '''    
-    rotation_complete = db.rotate_database(archive_path=archive_path)
-    clogger.debug(f"Database path: {db_path}, Archive path: {archive_path}")
-    clogger.debug(type(archive_path))
-    if archive_path == "None":
-        take_action = input(ui.FOLDER_MISSING.value).strip().lower()
-        if take_action in ['yes', 'y']:
-            archive_path = input(ui.GET_USER_PATH.value).strip()
-            try: #TODO: Check if user path.name contains substring 'archive'. If no, joinpath with default "db_Archive"
-                add_path_to_json = Path(archive_path).joinpath("db_Archive").resolve()
-                clogger.debug(type(archive_path))
-            except Exception as e:
-                clogger.error(f"Error resolving archive path: {e}")
-                print("Invalid path provided. Please try again.")
-                return    
-            db_path, archive_path = db.rotate_database(db_path, archive_path, add_path_to_json)
-            print(ui.FOLDER_CREATED.value.format(archive_path=archive_path))
-        else:
-            clogger.info("User chose not to create an archive folder.")
-            return
-    take_action = input(ui.CONFIRM_ROTATION.value).strip().lower()
-    if take_action in ['yes', 'y']:
-        db.rotate_database(db_path, archive_path)
-    '''
-
-
-                   
 
 
 

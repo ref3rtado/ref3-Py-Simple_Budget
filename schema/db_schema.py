@@ -44,6 +44,14 @@ class db_payload:
         pass
         return None  # Placeholder for the actual hash generation logic
 
+def generate_archive_filename(creation_date) -> str:
+    """
+    Keeps the archive filename consistent with the database creation date.
+    """
+    creation_date = creation_date.replace('-', '_')
+    archive_filename = f"db_{creation_date}.json"
+    return archive_filename
+
 if __name__ == "__main__":
     # Example usage
     transaction = db_payload(table_name="Grocery", cost="50.00", description="Weekly groceries", date="2023-10-01")

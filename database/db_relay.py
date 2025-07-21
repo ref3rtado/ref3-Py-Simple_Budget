@@ -9,7 +9,9 @@ import sys
 from pathlib import Path
 from typing import Union
 from datetime import date
-from schema.db_schema import db_list
+from schema.db_schema import db_list as db_list
+from schema.db_schema import db_payload as db_payload
+import schema.db_schema as db_schema
 import schema.ui_prompts as ui
 import shutil
 ##############################################################################################################################
@@ -43,7 +45,7 @@ class InitializeNewDatabase:
             clogger.info(f"Table '{table}' created in database at {self.db_path}")
 
 
-def check_database_exists() -> str:
+def get_paths() -> str:
     """
     Checks if the database exists by looking for the db_location.json file.
     If the file exists and contains a valid path, returns the path as a string.
@@ -60,13 +62,12 @@ def check_database_exists() -> str:
             archive_path = locations.get('archive_path')
             clogger.debug(f"Database path from json: {db_path}")
             clogger.debug(f"Archive path from json: {archive_path}")
-            if not Path(db_path).exists() or db_path == "None":
-                print("Path to database is invalid or the database does not exist.")
-                return db_path, archive_path
+            return db_path, archive_path
     except FileNotFoundError:
         clogger.error("db_location.json file not found. ")
         print("Setting up a json file to store database path...")
         setup_location_json()
+        print("Configuration file created. You will need to enter the paths to continue.")
         db_path, archive_path = setup_database(location_json_path)
     return db_path, archive_path
 
@@ -95,27 +96,32 @@ def setup_database(db_path, archive_path) -> str:
 
 def setup_location_json(db_path: str = None, archive_path: str = None) -> None:
     location_json_path = Path(__file__).parent.joinpath('db_location.json').resolve()
+    clogger.debug(f'Adding db path: {db_path}')
+    clogger.debug(f'Adding archive path: {archive_path}')
     with open(location_json_path, 'w') as f:
         json.dump({"database_path": str(db_path), "archive_path": str(archive_path)}, f, indent=4)
 
 def rotate_database(db_path: str=None, archive_path: str=None) -> None:
-    clogger.debug(f"Locations: {locations}")
     clogger.debug(f"Archive path: {archive_path}")
     clogger.debug(f"Database path: {db_path}")
+
     db_path = Path(db_path).resolve()
     archive_path = Path(archive_path).resolve()
     if not archive_path.exists():
         archive_path.mkdir(parents=True, exist_ok=True)
-        clogger.info(f"Archive folder created at: {archive_path}")
+        clogger.error(f"Archive folder didn't exist, it has been created at: {archive_path}")
     
     # Move the current database to the archive folder
     clogger.debug(f"Moving database from {db_path} to {archive_path}")
     current_db = TinyDB(db_path)
     with current_db as db:
         default_table = current_db.table('All_Tables')
+        if not default_table.contains(doc_id=1):
+            clogger.error("Default table 'All_Tables' does not exist in the database.")
+            return
         creation_date = default_table.get(doc_id=1).get('creation_date')
-        creation_date = creation_date.replace('-', '_')
-        archive_destination = archive_path.joinpath(f"db_{creation_date}.json")
+        archive_filename = db_schema.generate_archive_filename(creation_date)
+        archive_destination = archive_path.joinpath(archive_filename)
         if archive_destination.exists():
             existing_file_name = archive_destination.stem
             if existing_file_name[-1] == ']':
@@ -129,7 +135,7 @@ def rotate_database(db_path: str=None, archive_path: str=None) -> None:
     shutil.move(str(db_path), str(archive_destination))
    
     # Create a new database
-    setup_database(db_path=db_path, location_exists=True)
+    InitializeNewDatabase(db_path=db_path, tables=db_list)
 
 def add_transaction(payload: object, db_path: str) -> None:
     pass
