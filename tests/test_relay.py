@@ -70,4 +70,35 @@ def test_rotate_database(temp_db_path, temp_archive_directory):
     clogger.debug(f"Expected archive file: {expected_archive_file_path}")
     # Check if the archive file exists with the incremented name
     assert expected_archive_file_path.exists(), "The database should be archived with an incremented name in the specified directory."
+
+@pytest.xfail(reason="The db isn't being initialized with the correct total_budget value.")
+def test_add_transaction(temp_db_path):
+    payload = Payload(
+        table_name="Groceries", 
+        cost="25.05", 
+        description="test description", 
+        date="2025-02-01"
+        )
+    result = db_relay.add_transaction(payload, temp_db_path)
+    clogger.debug(f"Return value from add_transaction [Expected is None]: {result}")
     
+    # Test that the function did not raise any exceptions.
+    assert result is None, "add_transaction function should return None if no exceptions are raised"
+
+    # Test that the function successfully added the transaction
+    db = TinyDB(temp_db_path)
+    payload_table = payload.get_table_name()
+    db_table = db.table(payload_table)
+    data_added_to_db = db_table.all()[0]
+    clogger.debug(f'Data found in test database: {data_added_to_db}')
+    assert data_added_to_db['cost'] == "25.05", "The cost of the added transaction should be 25.05"
+    assert data_added_to_db['description'] == 'test description', "The description should be \"test description\""
+    assert data_added_to_db['date'] == '2025-02-01', "The date should be 2025-02-01"
+
+    # Test that the remaining budget has been updated.
+    parent_table = db.table('All_Tables')
+    clogger.debug(parent_table.all())
+    current_total_budget = parent_table.all()[0].get("total_budget")
+    clogger.debug(f'Current total budget: {current_total_budget}')
+   
+

@@ -23,7 +23,7 @@ class db_payload:
         self.cost = cost
         self.description = description
         self.date = date
-        self.pseudo_hash_id = self.get_psuedo_hash(self.table_name, self.cost, self.date)
+        #self.pseudo_hash_id = self.get_psuedo_hash(self.table_name, self.cost, self.date)
 
     def get_psuedo_hash(table_name: str, cost: float, date: str) -> int:
         """
@@ -43,6 +43,16 @@ class db_payload:
         # TODO: Convert date to a integer representing delta between db creation and transaction date
         pass
         return None  # Placeholder for the actual hash generation logic
+    
+    def get_table_name(self) -> str:
+        return self.table_name
+    
+    def get_payload_data(self) -> dict:
+        payload_data = {"cost": self.cost,
+                        "description": self.description,
+                        "date": self.date
+        }
+        return payload_data
 
 def generate_archive_filename(creation_date) -> str:
     """

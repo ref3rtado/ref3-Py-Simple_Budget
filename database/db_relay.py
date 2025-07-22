@@ -44,6 +44,32 @@ class InitializeNewDatabase:
             })
             clogger.info(f"Table '{table}' created in database at {self.db_path}")
 
+def check_database_exists() -> str:
+    """
+    Checks if the database exists by looking for the db_location.json file.
+    If the file exists and contains a valid path, returns the path as a string.
+    If the file does not exist or the path is "None" returns False.
+    """
+    location_json_path = Path(__file__).parent.joinpath('db_location.json').resolve()
+    clogger.debug(f"Checking for db_location.json at: {location_json_path}")
+    db_path = None
+    archive_path = None
+    try:
+        with open(location_json_path, 'r') as f:
+            locations = json.load(f)
+            db_path = locations.get('database_path')
+            archive_path = locations.get('archive_path')
+            clogger.debug(f"Database path from json: {db_path}")
+            clogger.debug(f"Archive path from json: {archive_path}")
+            if not Path(db_path).exists() or db_path == "None":
+                print("Path to database is invalid or the database does not exist.")
+                return db_path, archive_path
+    except FileNotFoundError:
+        clogger.error("db_location.json file not found. ")
+        print("Setting up a json file to store database path...")
+        setup_location_json()
+        db_path, archive_path = setup_database(location_json_path)
+    return db_path, archive_path
 
 def get_paths() -> str:
     """
@@ -138,4 +164,22 @@ def rotate_database(db_path: str=None, archive_path: str=None) -> None:
     InitializeNewDatabase(db_path=db_path, tables=db_list)
 
 def add_transaction(payload: object, db_path: str) -> None:
-    pass
+    db = TinyDB(db_path)
+    payload_table = payload.get_table_name()
+    try:
+        db_table = db.table(payload_table)
+    except Exception as table_err: 
+        clogger.error(table_err)
+        clogger.error(f"Could not grab the table'{payload_table}' from the database at {db_path}")
+        return table_err
+    else:
+        clogger.debug(f'Got table name: {payload_table}')
+    payload = payload.get_payload_data()
+    clogger.debug(f'Payload to add: {payload}')
+    try:
+        db_table.insert(payload)
+    except Exception as insert_err:
+        clogger.error(insert_err)
+        clogger.error(f"Could not add the payload to db {db_path}")
+        return insert_err
+
