@@ -20,7 +20,7 @@ clogger = setup_logging(name="db_relay_logger", level=logging.DEBUG)
 flogger = setup_logging(name="db_relay", level=logging.DEBUG, log_file='Simple_Budget_Log.log')
 ##############################################################################################################################
 class InitializeNewDatabase:
-    def __init__(self, db_path: str, tables: list = db_list, total_budget: float = 0.0):
+    def __init__(self, db_path: str, tables: list = db_list, total_budget: float = 0.0, custom_params = False, user_params: dict = {}):
         """
         Initializes a new database at the specified path.
         Most often used when the database is rotated.        
@@ -30,6 +30,10 @@ class InitializeNewDatabase:
         self.total_budget = total_budget
         self.tables = tables
         self.db_path = db_path
+
+        if custom_params:
+            self.creation_date = user_params['creation_date'] if user_params['creation_date'] else date.today().isoformat()
+            self.total_budget = user_params['total_budget'] if user_params['total_budget'] else total_budget
         
         db = TinyDB(self.db_path, sort_keys=True, indent=4, separators=(',', ': '))
         db.default_table_name = 'All_Tables'
@@ -43,6 +47,7 @@ class InitializeNewDatabase:
                 'category budget': 0.0
             })
             clogger.info(f"Table '{table}' created in database at {self.db_path}")
+        
 
 def check_database_exists() -> str:
     """
@@ -127,7 +132,7 @@ def setup_location_json(db_path: str = None, archive_path: str = None) -> None:
     with open(location_json_path, 'w') as f:
         json.dump({"database_path": str(db_path), "archive_path": str(archive_path)}, f, indent=4)
 
-def rotate_database(db_path: str=None, archive_path: str=None) -> None:
+def rotate_database(db_path: str=None, archive_path: str=None, custom_params_for_new_db = {}) -> None:
     clogger.debug(f"Archive path: {archive_path}")
     clogger.debug(f"Database path: {db_path}")
 
@@ -161,7 +166,10 @@ def rotate_database(db_path: str=None, archive_path: str=None) -> None:
     shutil.move(str(db_path), str(archive_destination))
    
     # Create a new database
-    InitializeNewDatabase(db_path=db_path, tables=db_list)
+    if custom_params_for_new_db:
+        InitializeNewDatabase(db_path=db_path, tables=db_list, custom_params=True, user_params=custom_params_for_new_db)
+    else:
+        InitializeNewDatabase(db_path=db_path, tables=db_list)
 
 def add_transaction(payload: object, db_path: str) -> None:
     db = TinyDB(db_path)

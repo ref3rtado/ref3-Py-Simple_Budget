@@ -40,10 +40,11 @@ def test_db_initialization_tables(test_db):
     clogger.debug(expected_temp_tables.difference(actual_temp_tables)) 
     assert expected_temp_tables.difference(actual_temp_tables) == set(), "Database should contain the correct tables."
 
-def test_db_initialization_creation_date(test_db):
-    current_date = date.today().isoformat()
+def test_db_initialization_all_table_data(test_db):
+    test_date = date.today().isoformat()
     creation_date = test_db.table('All_Tables').get(doc_id=1).get('creation_date')
-    assert creation_date == current_date, "Database should have the correct creation date."
+    total_budget = test_db.table('All_Tables').get(doc_id=1).get('total_budget')
+    assert creation_date == test_date, "Database should have the correct creation date."
 
 @pytest.fixture(scope="function")
 def temp_archive_directory(temp_db_path):
@@ -71,7 +72,29 @@ def test_rotate_database(temp_db_path, temp_archive_directory):
     # Check if the archive file exists with the incremented name
     assert expected_archive_file_path.exists(), "The database should be archived with an incremented name in the specified directory."
 
-@pytest.xfail(reason="The db isn't being initialized with the correct total_budget value.")
+def test_rotation_with_custom_initialization(temp_db_path, temp_archive_directory):
+    clogger.debug('Starting test for customizing new database initialization after rotating the db')
+    custom_params = {
+        'creation_date': '2025-01-02',
+        'total_budget': 1000.01,
+    }
+    clogger.debug('Instantiating new database')
+    result = db_relay.rotate_database(
+        db_path=temp_db_path,
+        archive_path=temp_archive_directory,
+        custom_params_for_new_db=custom_params,
+    )
+    clogger.debug("Completed db instantiation.")
+    
+    # Check that the root table has the values that we specified.
+    db = TinyDB(temp_db_path) 
+    clogger.debug("Checking contents of the root table")
+    root_table = db.table('All_Tables').all()
+    clogger.debug(f'root_table_contents: {root_table}')
+    assert root_table[0].get('creation_date') == '2025-01-02'
+    clogger.debug('Checking the total budget limit...')
+    assert root_table[1].get("total_budget") == 1000.01
+    
 def test_add_transaction(temp_db_path):
     payload = Payload(
         table_name="Groceries", 
@@ -96,9 +119,9 @@ def test_add_transaction(temp_db_path):
     assert data_added_to_db['date'] == '2025-02-01', "The date should be 2025-02-01"
 
     # Test that the remaining budget has been updated.
-    parent_table = db.table('All_Tables')
-    clogger.debug(parent_table.all())
-    current_total_budget = parent_table.all()[0].get("total_budget")
+    root_table = db.table('All_Tables').all()
+    current_total_budget = root_table[1].get("total_budget")
     clogger.debug(f'Current total budget: {current_total_budget}')
+
    
 
