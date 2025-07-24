@@ -25,7 +25,7 @@ def temp_db_path(tmp_path_factory):
 @pytest.fixture(scope="function")
 def test_db(temp_db_path):
     clogger.debug(f"Temporary database path: {temp_db_path}")
-    db_relay.InitializeNewDatabase(db_path=temp_db_path, tables=['Groceries', 'Car', 'Shopping'], total_budget=1000.0)
+    db_relay.InitializeNewDatabase(db_path=temp_db_path, tables=['Groceries', 'Car', 'Shopping'], total_budget=1000.01)
     db = TinyDB(temp_db_path, sort_keys=True, indent=4, separators=(',', ': '))
     yield db
     db.close()
@@ -96,6 +96,7 @@ def test_rotation_with_custom_initialization(temp_db_path, temp_archive_director
     assert root_table[1].get("total_budget") == 1000.01
     
 def test_add_transaction(temp_db_path):
+    db = TinyDB(temp_db_path)
     payload = Payload(
         table_name="Groceries", 
         cost="25.05", 
@@ -109,7 +110,7 @@ def test_add_transaction(temp_db_path):
     assert result is None, "add_transaction function should return None if no exceptions are raised"
 
     # Test that the function successfully added the transaction
-    db = TinyDB(temp_db_path)
+    
     payload_table = payload.get_table_name()
     db_table = db.table(payload_table)
     data_added_to_db = db_table.all()[0]
@@ -118,10 +119,12 @@ def test_add_transaction(temp_db_path):
     assert data_added_to_db['description'] == 'test description', "The description should be \"test description\""
     assert data_added_to_db['date'] == '2025-02-01', "The date should be 2025-02-01"
 
-    # Test that the remaining budget has been updated.
-    root_table = db.table('All_Tables').all()
-    current_total_budget = root_table[1].get("total_budget")
-    clogger.debug(f'Current total budget: {current_total_budget}')
+def test_total_budget_updated(temp_db_path):
+    db = TinyDB(temp_db_path)
+    all_tables = db.table("All_Tables")
+    current_total_balance = all_tables.all()[1].get("total_budget")
+    assert current_total_balance == 1000.01 - 25.05
+
 
    
 

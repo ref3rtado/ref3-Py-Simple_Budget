@@ -111,6 +111,7 @@ def main(db_path: str = None, archive_path: str = None) -> None:
         case MainMenu.EXIT.value:
             print("Exiting application.")
 
+# TODO: Add input validation | Check out pydantic
 def add_trasaction(db_path) -> None:
     ui = iter(AddTransaction(db_path))
     print(next(ui))
@@ -141,6 +142,7 @@ def add_trasaction(db_path) -> None:
     payload.date = date_input
     clogger.info(f"Payload created: {payload.__dict__}")
     # Send payload to db_relay.py to add the transaction 
+    db.add_transaction(payload, db_path)
 
 def rotate_database(db_path, archive_path) -> None:
     """

@@ -47,12 +47,15 @@ class db_payload:
     def get_table_name(self) -> str:
         return self.table_name
     
-    def get_payload_data(self) -> dict:
+    def get_payload_data(self, requested_data=None) -> dict:
         payload_data = {"cost": self.cost,
                         "description": self.description,
                         "date": self.date
         }
-        return payload_data
+        if requested_data == None:
+            return payload_data
+        else:
+            return payload_data[requested_data]
 
 def generate_archive_filename(creation_date) -> str:
     """

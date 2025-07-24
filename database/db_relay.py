@@ -3,6 +3,7 @@
 #TODO: Import tinyDB 
 ##############################################################################################################################
 from tinydb import TinyDB, Query
+from tinydb.operations import subtract
 import json
 import logging
 import sys
@@ -190,4 +191,11 @@ def add_transaction(payload: object, db_path: str) -> None:
         clogger.error(insert_err)
         clogger.error(f"Could not add the payload to db {db_path}")
         return insert_err
+    #TODO: Turn below into a function?
+    # Update the total budget and return the value
+    all_tables = db.table("All_Tables")
+    all_tables.update(subtract("total_budget", float(payload["cost"])), doc_ids=[2])
+    new_total_budget = all_tables.all()[1].get("total_budget")
+    clogger.debug(f'Updated total budget amount to: {new_total_budget}')
+    
 
