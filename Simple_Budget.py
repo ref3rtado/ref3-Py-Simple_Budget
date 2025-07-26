@@ -124,7 +124,7 @@ def add_trasaction(db_path) -> None:
         clogger.info(f"User selected category: {selected_category}")
         # Add category to payload object
     amount = input(next(ui)).strip()
-    #TODO: If NaN, try stipping the first character (likely a $ sign), then convert to float .2f
+    # TODO: If NaN, try stipping the first character (likely a $ sign), then convert to float .2f
     clogger.info(f"User entered amount: {amount}")
     payload = db_payload(table_name=selected_category, cost=float(amount))
     description = input(next(ui)).strip()
@@ -140,9 +140,15 @@ def add_trasaction(db_path) -> None:
         date_input = date.today().isoformat()
         clogger.info("User did not provide a date, using today's date.")
     payload.date = date_input
-    clogger.info(f"Payload created: {payload.__dict__}")
+    clogger.debug(f"Payload created: {payload.__dict__}")
     # Send payload to db_relay.py to add the transaction 
     db.add_transaction(payload, db_path)
+    remaining_total_budget, remaining_category_budget = db.get_remaining_budget(db_path, selected_category)
+    summary = next(ui)
+    print(summary.format(
+        total=remaining_total_budget, 
+        table=selected_category,
+        category=remaining_category_budget))
 
 def rotate_database(db_path, archive_path) -> None:
     """

@@ -65,7 +65,7 @@ def add_transaction_ui_flow(db_path) -> list:
         'Enter the cost of the trasaction | "q" to cancel: ',
         'Enter a description for the transaction (optional) | "q" to cancel: ',
         'Enter the date of the transaction (YYYY-MM-DD) or press Enter for today | "q" to cancel: ',
-        '--Remaining budget-- \nTotal: {remaining_total_budget} \n Category: {remaining_category_budget}']
+        '\n\n--Remaining budget-- \nTotal budget: {total} \n{table} budget: {category}']
     categories = get_current_tables(db_path)
     category_dict = {}
     for i, category in enumerate(categories, start=1):

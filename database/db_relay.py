@@ -197,5 +197,12 @@ def add_transaction(payload: object, db_path: str) -> None:
     all_tables.update(subtract("total_budget", float(payload["cost"])), doc_ids=[2])
     new_total_budget = all_tables.all()[1].get("total_budget")
     clogger.debug(f'Updated total budget amount to: {new_total_budget}')
-    
+
+def get_remaining_budget(db_path, table) -> tuple: 
+    db = TinyDB(db_path)
+    all_tables = db.table("All_Tables")
+    total_budget = all_tables.all()[1].get("total_budget")
+    category_table = db.table(table)
+    category_budget = category_table.get(doc_id=1)['category budget']
+    return total_budget, category_budget
 

@@ -98,7 +98,7 @@ def test_rotation_with_custom_initialization(temp_db_path, temp_archive_director
 def test_add_transaction(temp_db_path):
     db = TinyDB(temp_db_path)
     payload = Payload(
-        table_name="Groceries", 
+        table_name="Grocery", 
         cost="25.05", 
         description="test description", 
         date="2025-02-01"
@@ -109,21 +109,19 @@ def test_add_transaction(temp_db_path):
     # Test that the function did not raise any exceptions.
     assert result is None, "add_transaction function should return None if no exceptions are raised"
 
-    # Test that the function successfully added the transaction
-    
+    # Test that the function successfully added the transaction    
     payload_table = payload.get_table_name()
     db_table = db.table(payload_table)
-    data_added_to_db = db_table.all()[0]
+    data_added_to_db = db_table.get(doc_id=2)
     clogger.debug(f'Data found in test database: {data_added_to_db}')
     assert data_added_to_db['cost'] == "25.05", "The cost of the added transaction should be 25.05"
     assert data_added_to_db['description'] == 'test description', "The description should be \"test description\""
     assert data_added_to_db['date'] == '2025-02-01', "The date should be 2025-02-01"
 
 def test_total_budget_updated(temp_db_path):
-    db = TinyDB(temp_db_path)
-    all_tables = db.table("All_Tables")
-    current_total_balance = all_tables.all()[1].get("total_budget")
-    assert current_total_balance == 1000.01 - 25.05
+    total_budget, grocery_budget = db_relay.get_remaining_budget(temp_db_path, "Grocery")
+    assert total_budget == 1000.01 - 25.05
+    assert grocery_budget == 0.0
 
 
    
