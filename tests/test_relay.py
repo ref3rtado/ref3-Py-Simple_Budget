@@ -30,10 +30,12 @@ def test_db(temp_db_path):
     yield db
     db.close()
 
+## Primarily testing interactions with the InitializeDatabase Class ##
 def test_db_initialization_tables(test_db):
     """
-    Test to ensure that the temporary database is created correctly.
-    Test to make sure it was created with the correct tables. 
+    Test to ensure that when the temp db was created with InitializeNewDatabase class
+    it created the expected tables. 
+    These tables will be overwritten after the rotate_database test is completed.
     """
     expected_temp_tables = {'All_Tables', 'Groceries', 'Car', 'Shopping'}
     actual_temp_tables = set(test_db.tables())
@@ -41,18 +43,25 @@ def test_db_initialization_tables(test_db):
     assert expected_temp_tables.difference(actual_temp_tables) == set(), "Database should contain the correct tables."
 
 def test_db_initialization_all_table_data(test_db):
+    '''
+    Testing to make sure the root container for all the tables was created 
+    with the metadata 'creation_date' and 'total_budget'.
+    Checks to make sure the date in 'creation_date' is correct.
+    #FIXME: Missing assert statement to check total_budget
+    '''
     test_date = date.today().isoformat()
     creation_date = test_db.table('All_Tables').get(doc_id=1).get('creation_date')
     total_budget = test_db.table('All_Tables').get(doc_id=1).get('total_budget')
     assert creation_date == test_date, "Database should have the correct creation date."
 
+## Start testing the db rotation functionality, which will initialize a new db with the 
+## same values that are expected to see in production version
 @pytest.fixture(scope="function")
 def temp_archive_directory(temp_db_path):
     archive_path = temp_db_path.parent / "archive"
     archive_path.mkdir(exist_ok=True)
     clogger.debug(f'Temporary archive directory created at: {archive_path}')
     return archive_path
-
 
 def test_rotate_database(temp_db_path, temp_archive_directory):
     clogger.debug(f"Testing database rotation with db_path: {temp_db_path} and archive_path: {temp_archive_directory}")
@@ -79,13 +88,13 @@ def test_rotation_with_custom_initialization(temp_db_path, temp_archive_director
         'total_budget': 1000.01,
     }
     clogger.debug('Instantiating new database')
+    #FIXME: Set up a test for error handling and delete this or implement a !return from the func to confirm success.
     result = db_relay.rotate_database(
         db_path=temp_db_path,
         archive_path=temp_archive_directory,
         custom_params_for_new_db=custom_params,
     )
     clogger.debug("Completed db instantiation.")
-    
     # Check that the root table has the values that we specified.
     db = TinyDB(temp_db_path) 
     clogger.debug("Checking contents of the root table")
@@ -119,9 +128,10 @@ def test_add_transaction(temp_db_path):
     assert data_added_to_db['date'] == '2025-02-01', "The date should be 2025-02-01"
 
 def test_total_budget_updated(temp_db_path):
-    total_budget, grocery_budget = db_relay.get_remaining_budget(temp_db_path, "Grocery")
-    assert total_budget == 1000.01 - 25.05
-    assert grocery_budget == 0.0
+    total_budget, grocery_budget, total_spent_grocery = db_relay.get_current_budget_stats(temp_db_path, "Grocery")
+    assert total_budget == 1000.01 - 25.05, "Total budget should be the initial value 1000.01 - 25.05"
+    assert grocery_budget == None, "No category budget should have been setup, Expected None value"
+    assert total_spent_grocery == 25.05, "Cost of grocery transactions should equal 25.05"
 
 
    

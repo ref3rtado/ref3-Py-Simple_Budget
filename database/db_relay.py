@@ -1,6 +1,4 @@
-#TODO: Check for existence of db_location.json file
-###### If not present, prompt user to create it, then use the specified path to create the database
-#TODO: Import tinyDB 
+
 ##############################################################################################################################
 from tinydb import TinyDB, Query
 from tinydb.operations import subtract
@@ -15,22 +13,29 @@ from schema.db_schema import db_payload as db_payload
 import schema.db_schema as db_schema
 import schema.ui_prompts as ui
 import shutil
+
+
 ##############################################################################################################################
 from log.LogSetup import setup_logging
 clogger = setup_logging(name="db_relay_logger", level=logging.DEBUG)
 flogger = setup_logging(name="db_relay", level=logging.DEBUG, log_file='Simple_Budget_Log.log')
 ##############################################################################################################################
+
+
 class InitializeNewDatabase:
     def __init__(self, db_path: str, tables: list = db_list, total_budget: float = 0.0, custom_params = False, user_params: dict = {}):
         """
         Initializes a new database at the specified path.
         Most often used when the database is rotated.        
         :param tables: Default tables hardcoded in db_schema.py. User can pass a list of tables to override the defaults.
+        :param custom_params: Boolean, if true check user_params dictionary 
+        :param user_params: Dictionary that should contain {creation_date: str, total_budget: float}
         """
         self.creation_date = date.today().isoformat()
         self.total_budget = total_budget
         self.tables = tables
         self.db_path = db_path
+        self.total_spent = 0.0
 
         if custom_params:
             self.creation_date = user_params['creation_date'] if user_params['creation_date'] else date.today().isoformat()
@@ -40,12 +45,14 @@ class InitializeNewDatabase:
         db.default_table_name = 'All_Tables'
         db.insert({'creation_date': self.creation_date})
         db.insert({'total_budget': self.total_budget})
+        db.insert({'total_spent': self.total_spent})
         for table in self.tables:
             # Create a new table for each category
             current_table = db.table(table)
             current_table.insert({   
                 'table_name': table,
-                'category budget': 0.0
+                'category_budget': None,
+                'total_spent' : 0.0
             })
             clogger.info(f"Table '{table}' created in database at {self.db_path}")
         
@@ -77,6 +84,7 @@ def check_database_exists() -> str:
         db_path, archive_path = setup_database(location_json_path)
     return db_path, archive_path
 
+
 def get_paths() -> str:
     """
     Checks if the database exists by looking for the db_location.json file.
@@ -103,6 +111,7 @@ def get_paths() -> str:
         db_path, archive_path = setup_database(location_json_path)
     return db_path, archive_path
 
+
 def setup_database(db_path, archive_path) -> str:
     """
     Sets up or creates the dabase path in db_location.json.
@@ -126,12 +135,14 @@ def setup_database(db_path, archive_path) -> str:
         InitializeNewDatabase(db_path, tables=db_list)
     return db_path, archive_path
 
+
 def setup_location_json(db_path: str = None, archive_path: str = None) -> None:
     location_json_path = Path(__file__).parent.joinpath('db_location.json').resolve()
     clogger.debug(f'Adding db path: {db_path}')
     clogger.debug(f'Adding archive path: {archive_path}')
     with open(location_json_path, 'w') as f:
         json.dump({"database_path": str(db_path), "archive_path": str(archive_path)}, f, indent=4)
+
 
 def rotate_database(db_path: str=None, archive_path: str=None, custom_params_for_new_db = {}) -> None:
     clogger.debug(f"Archive path: {archive_path}")
@@ -172,7 +183,9 @@ def rotate_database(db_path: str=None, archive_path: str=None, custom_params_for
     else:
         InitializeNewDatabase(db_path=db_path, tables=db_list)
 
+
 def add_transaction(payload: object, db_path: str) -> None:
+    #TODO: Create function to update and return budget totals.
     db = TinyDB(db_path)
     payload_table = payload.get_table_name()
     try:
@@ -191,14 +204,15 @@ def add_transaction(payload: object, db_path: str) -> None:
         clogger.error(insert_err)
         clogger.error(f"Could not add the payload to db {db_path}")
         return insert_err
-    #TODO: Turn below into a function?
+    
     # Update the total budget and return the value
     all_tables = db.table("All_Tables")
     all_tables.update(subtract("total_budget", float(payload["cost"])), doc_ids=[2])
     new_total_budget = all_tables.all()[1].get("total_budget")
     clogger.debug(f'Updated total budget amount to: {new_total_budget}')
 
-def get_remaining_budget(db_path, table) -> tuple: 
+
+def get_current_budget_stats(db_path, table) -> tuple: 
     db = TinyDB(db_path)
     all_tables = db.table("All_Tables")
     total_budget = all_tables.all()[1].get("total_budget")

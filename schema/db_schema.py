@@ -41,6 +41,7 @@ class db_payload:
         # TODO: Convert table_name to (index + 1) * 100000
         # TODO: Convert cost to a 3 digit value based on ranges
         # TODO: Convert date to a integer representing delta between db creation and transaction date
+        # TODO: Before implementing, run time analysis to see if indexing is quicker than TinyDB query method
         pass
         return None  # Placeholder for the actual hash generation logic
     

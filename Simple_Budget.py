@@ -1,16 +1,4 @@
 ## Main Script for Simple Budget Application ##
-#TODO: Import db_relay module
-
-#TODO: On startup, check if the database exists by talking to db_relay.py
-
-#TODO: Print a welcome message, interaction menu, and prompt for user input
-##Example: 1) Add Transaction | 2) Check Balance | 3) Modify Tables | 4) Exit
-##On "1"
-### Pull and enumerate the columns in the database, present as numbered options -- 1) Grocery, 2) Shopping, etc. 
-#### On "1"
-##### Prompt for amount, optional description, and date
-###### On enter, print something like "Transaction added" /n "Current Balance: $X.XX"
-
 ##############################################################################################################################
 
 import database.db_relay as db
@@ -31,6 +19,7 @@ from log.LogSetup import setup_logging
 clogger = setup_logging(name="SimpleBudgetLogger", level=logging.DEBUG)
 flogger = setup_logging(name="SimpleBudget", level=logging.DEBUG, log_file='Simple_Budget_Log.log')
 ##############################################################################################################################
+
 
 class StartingActions(Enum):
     LAUNCH_PROGRAM: str = "Launching program..."
@@ -61,6 +50,7 @@ def take_starting_action(action: StartingActions, db_path, archive_path) -> None
     else:
         clogger.error("Invalid action specified.")
 
+
 def existence_check() -> None:
     """
     #TODO: Refactor using ui_prompts.py
@@ -85,6 +75,7 @@ def existence_check() -> None:
             action = StartingActions.ADD_PATH_TO_JSON
             take_starting_action(action, db_path, archive_path)
     main(db_path, archive_path)
+
 
 def main(db_path: str = None, archive_path: str = None) -> None:
     MainMenu.print_menu(self=True)
@@ -111,8 +102,11 @@ def main(db_path: str = None, archive_path: str = None) -> None:
         case MainMenu.EXIT.value:
             print("Exiting application.")
 
-# TODO: Add input validation | Check out pydantic
+
+
 def add_trasaction(db_path) -> None:
+    # TODO: Add input validation | Check out pydantic
+    # TODO: If NaN, try stipping the first character (likely a $ sign), then convert to float .2f
     ui = iter(AddTransaction(db_path))
     print(next(ui))
     categories = next(ui)  # Get the categories dictionary
@@ -123,8 +117,7 @@ def add_trasaction(db_path) -> None:
     if selected_category:
         clogger.info(f"User selected category: {selected_category}")
         # Add category to payload object
-    amount = input(next(ui)).strip()
-    # TODO: If NaN, try stipping the first character (likely a $ sign), then convert to float .2f
+    amount = input(next(ui)).strip()    
     clogger.info(f"User entered amount: {amount}")
     payload = db_payload(table_name=selected_category, cost=float(amount))
     description = input(next(ui)).strip()
@@ -146,9 +139,10 @@ def add_trasaction(db_path) -> None:
     remaining_total_budget, remaining_category_budget = db.get_remaining_budget(db_path, selected_category)
     summary = next(ui)
     print(summary.format(
-        total=remaining_total_budget, 
+        remaining_budget=remaining_total_budget, 
         table=selected_category,
         category=remaining_category_budget))
+
 
 def rotate_database(db_path, archive_path) -> None:
     """
