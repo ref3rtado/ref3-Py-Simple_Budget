@@ -107,6 +107,7 @@ def main(db_path: str = None, archive_path: str = None) -> None:
 def add_trasaction(db_path) -> None:
     # TODO: Add input validation | Check out pydantic
     # TODO: If NaN, try stipping the first character (likely a $ sign), then convert to float .2f
+    # TODO: After setting up the per-category budget, add the remaining category budget to print out.
     ui = iter(AddTransaction(db_path))
     print(next(ui))
     categories = next(ui)  # Get the categories dictionary
@@ -166,6 +167,20 @@ def rotate_database(db_path, archive_path) -> None:
         if take_action in ['yes', 'y']:
             db.rotate_database(db_path, archive_path)
 
+def set_category_budget(db_path):
+    # Ask to make the total budget the sum of all categories. Set a boolean value
+    # While loop, break out with not [y, Y, q, Q]
+    # Reset loop variable
+    # Display list of tables with a number selector
+    # Prompt user to select a number, assign category name var
+    # Print out the current budget for the selected category
+    # Prompt user to input the budget value
+    # Print confirmation when complete
+    # If sum bool True: return current total budget
+    # Prompt to continue, set loop variable with input
+    # unpack returned tuple with (total_budget, category sum)
+        # ?if not equal, print something?
+    pass
 
 
 if __name__ == "__main__":

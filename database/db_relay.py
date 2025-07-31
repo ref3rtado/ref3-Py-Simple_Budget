@@ -220,3 +220,11 @@ def get_current_budget_stats(db_path, table) -> tuple:
     category_budget = category_table.get(doc_id=1)['category budget']
     return total_budget, category_budget
 
+def set_table_budgets(db_path, table, budget_val, category_master=False) -> tuple:
+    # connect to db with dbpath
+    # get table object
+    # update table's budget variable
+    # Query() all docs with key "budget" and exist as docs inside the master table
+        # If master True: add all values together and update the all_tables (category container) budget
+    # Return tuple (total_budget, sum_of_tables)
+    pass

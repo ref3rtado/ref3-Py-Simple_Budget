@@ -45,15 +45,22 @@ class RotateDB_UI(Enum):
     FOLDER_CREATED = "Archive folder created at: {archive_path}"
     CONFIRM_ROTATION = "Continue with rotating the database? (yes/no): "
 
-def get_current_tables(db_path) -> list:
+def get_current_tables(db_path, display_tables=False) -> dict:
     """
     Grabs the current tables from the database and returns them as a list.
-    Currently using a dummy list.
+    :param db_path: string of path to database
+    :param display_tables: Boolean[Optional] True: print out list and return None, else return dict selector: table_name 
     """
     db = TinyDB(db_path)
     existing_tables = db.tables()
+    table_dict = {}
     db.close()
-    return existing_tables
+    for i, category in enumerate(existing_tables, start=1):
+        table_dict[category] = f'{i}. '
+        if display_tables:
+            print(f'{i}. {category}')
+    if not display_tables:
+        return table_dict
 
 def add_transaction_ui_flow(db_path) -> list:  
     """
@@ -67,11 +74,29 @@ def add_transaction_ui_flow(db_path) -> list:
         'Enter the date of the transaction (YYYY-MM-DD) or press Enter for today | "q" to cancel: ',
         '\n\n--Remaining budget-- \nTotal budget: {remaining_budget} \n{table} budget: {category}\nTotal {table} spent: {category_total}']
     categories = get_current_tables(db_path)
-    category_dict = {}
-    for i, category in enumerate(categories, start=1):
-        category_dict[category] = f'{i}. '
-    add_transaction_flow.insert(1, category_dict)
+    add_transaction_flow.insert(1, categories)
     return add_transaction_flow
+
+def set_table_budgets_ui(db_path) -> dict:
+    """
+    Walk through the process of setting individual budget limits per category.
+    """
+    current_tables = get_current_tables(db_path)
+    table_budget_ui = {
+        'control_total_budget': "Should the overall budget be the sum of all category budgets? y/n/q",
+        'display tables': current_tables, 
+        'select category': "Select the category to modify budget limit: ",
+        'print_current_budget': "{category} | Current budget set at {cur_budget}",
+        'enter_amount': "{category} | Enter budget: ",
+        'budget_set': "{category}" | "Budget set.",
+        'print_results':"""
+                            --Current Budgets--
+                            Sum of all categories: {category_sum}
+                            Overall Budget: {total_budget}
+                        """,
+        # sum != overall budget?
+    }
+    return table_budget_ui
 
 
 
