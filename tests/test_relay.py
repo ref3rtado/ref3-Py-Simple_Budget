@@ -88,7 +88,6 @@ def test_rotation_with_custom_initialization(temp_db_path, temp_archive_director
         'total_budget': 1000.01,
     }
     clogger.debug('Instantiating new database')
-    #FIXME: Set up a test for error handling and delete this or implement a !return from the func to confirm success.
     result = db_relay.rotate_database(
         db_path=temp_db_path,
         archive_path=temp_archive_directory,
@@ -127,11 +126,29 @@ def test_add_transaction(temp_db_path):
     assert data_added_to_db['description'] == 'test description', "The description should be \"test description\""
     assert data_added_to_db['date'] == '2025-02-01', "The date should be 2025-02-01"
 
-def test_total_budget_updated(temp_db_path):
-    total_budget, grocery_budget, total_spent_grocery = db_relay.get_current_budget_stats(temp_db_path, "Grocery")
+def test_budget_totals_updated(temp_db_path):
+    total_budget, grocery_budget, total_remaining, grocery_amount_spent = db_relay.get_current_budget_stats(temp_db_path, "Grocery")
     assert total_budget == 1000.01 - 25.05, "Total budget should be the initial value 1000.01 - 25.05"
     assert grocery_budget == None, "No category budget should have been setup, Expected None value"
-    assert total_spent_grocery == 25.05, "Cost of grocery transactions should equal 25.05"
+    assert grocery_amount_spent == 25.05, "The variable total_spent in grocery table should be updated"
+
+@pytest.mark.xfail(reason="Has not been implemented yet")
+def test_get_transaction_sums(temp_db_path):
+    # add a second transaction to groceries
+    # assert the returned value is correct
+    pass
+
+def test_budget_configuring(temp_db_path):
+    test_dict = {"All_Tables": 1000.00, "Grocery": 200.00, "Drinks": 201.23}
+    db_relay.set_table_budgets(temp_db_path, test_dict)
+    db = TinyDB(temp_db_path)
+    all_table = db.table("All_Tables").get(doc_id=2)
+    grocery = db.table("Grocery").get(doc_id=1)
+    drink = db.table("Drinks").get(doc_id=1)
+
+    assert all_table["total_budget"] == 1000.00
+    assert grocery["category_budget"] == 200.00
+    assert drink["category_budget"] == 201.23
 
 
    

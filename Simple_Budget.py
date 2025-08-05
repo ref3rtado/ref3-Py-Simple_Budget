@@ -11,6 +11,7 @@ import json
 from schema.ui_prompts import MainMenuOptions as MainMenu
 from schema.ui_prompts import add_transaction_ui_flow as AddTransaction
 from schema.ui_prompts import RotateDB_UI as RotateUI
+from schema.ui_prompts import SetBudgetUI
 from schema.db_schema import db_payload as db_payload
 
 
@@ -90,8 +91,9 @@ def main(db_path: str = None, archive_path: str = None) -> None:
             print("View Balance selected.")
         case MainMenu.VIEW_HISTORY.value:
             print("View History selected.")
-        case MainMenu.MODIFY_BUDGET.value:
+        case MainMenu.MODIFY_BUDGET.value:          
             print("Modify Budget selected.")
+            set_category_budget(db_path)
         case MainMenu.MODIFY_CATEGORIES.value:
             print("Modify Categories selected.")
         case MainMenu.ROTATE_DB.value:
@@ -137,12 +139,13 @@ def add_trasaction(db_path) -> None:
     clogger.debug(f"Payload created: {payload.__dict__}")
     # Send payload to db_relay.py to add the transaction 
     db.add_transaction(payload, db_path)
-    remaining_total_budget, remaining_category_budget = db.get_remaining_budget(db_path, selected_category)
+    cur_total_budget, cur_category_budget, remaining_total, category_spent = db.get_current_budget_stats(db_path, selected_category)
     summary = next(ui)
     print(summary.format(
-        remaining_budget=remaining_total_budget, 
+        remaining_budget=remaining_total, 
         table=selected_category,
-        category=remaining_category_budget))
+        category_budget = cur_category_budget,
+        category_total = category_spent))
 
 
 def rotate_database(db_path, archive_path) -> None:
@@ -163,23 +166,20 @@ def rotate_database(db_path, archive_path) -> None:
         else:
             clogger.info("User chose not to create an archive folder.")
             return
-        take_action = input(ui.CONFIRM_ROTATION.value).strip().lower()
-        if take_action in ['yes', 'y']:
-            db.rotate_database(db_path, archive_path)
+    take_action = input(ui.CONFIRM_ROTATION.value).strip().lower()
+    if take_action in ['yes', 'y']:
+        db.rotate_database(db_path, archive_path)
 
 def set_category_budget(db_path):
-    # Ask to make the total budget the sum of all categories. Set a boolean value
-    # While loop, break out with not [y, Y, q, Q]
-    # Reset loop variable
-    # Display list of tables with a number selector
-    # Prompt user to select a number, assign category name var
-    # Print out the current budget for the selected category
-    # Prompt user to input the budget value
-    # Print confirmation when complete
-    # If sum bool True: return current total budget
-    # Prompt to continue, set loop variable with input
-    # unpack returned tuple with (total_budget, category sum)
-        # ?if not equal, print something?
+    ui = SetBudgetUI(db_path)
+    action = input(ui.master_prompt)
+    print(ui.total_budget_as_slave(action))
+    action = "y"
+    while action in ["y", "Y"]:
+        action = ui.get_table_from_user()
+    ui.get_total_budget()
+    ui.print_pending_mods()
+    pending_budgets = ui.get_table_budget_dict()
     pass
 
 

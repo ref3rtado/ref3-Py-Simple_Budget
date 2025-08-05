@@ -1,7 +1,7 @@
 
 ##############################################################################################################################
 from tinydb import TinyDB, Query
-from tinydb.operations import subtract
+from tinydb.operations import subtract, add
 import json
 import logging
 import sys
@@ -23,7 +23,7 @@ flogger = setup_logging(name="db_relay", level=logging.DEBUG, log_file='Simple_B
 
 
 class InitializeNewDatabase:
-    def __init__(self, db_path: str, tables: list = db_list, total_budget: float = 0.0, custom_params = False, user_params: dict = {}):
+    def __init__(self, db_path: str, tables: list = db_list, total_budget: float = 1000.0, custom_params = False, user_params: dict = {}):
         """
         Initializes a new database at the specified path.
         Most often used when the database is rotated.        
@@ -41,8 +41,9 @@ class InitializeNewDatabase:
             self.creation_date = user_params['creation_date'] if user_params['creation_date'] else date.today().isoformat()
             self.total_budget = user_params['total_budget'] if user_params['total_budget'] else total_budget
         
+        TinyDB.default_table_name = 'All_Tables'       
+
         db = TinyDB(self.db_path, sort_keys=True, indent=4, separators=(',', ': '))
-        db.default_table_name = 'All_Tables'
         db.insert({'creation_date': self.creation_date})
         db.insert({'total_budget': self.total_budget})
         db.insert({'total_spent': self.total_spent})
@@ -204,6 +205,8 @@ def add_transaction(payload: object, db_path: str) -> None:
         clogger.error(insert_err)
         clogger.error(f"Could not add the payload to db {db_path}")
         return insert_err
+    else:
+        db_table.update(add("total_spent", float(payload["cost"])), doc_ids=[1])
     
     # Update the total budget and return the value
     all_tables = db.table("All_Tables")
@@ -216,15 +219,25 @@ def get_current_budget_stats(db_path, table) -> tuple:
     db = TinyDB(db_path)
     all_tables = db.table("All_Tables")
     total_budget = all_tables.all()[1].get("total_budget")
+    total_spent = all_tables.all()[2].get("total_spent")
+    total_budget_remaining = total_budget - total_spent
     category_table = db.table(table)
-    category_budget = category_table.get(doc_id=1)['category budget']
-    return total_budget, category_budget
+    category_budget = category_table.get(doc_id=1)['category_budget']
+    category_spent = category_table.get(doc_id=1)['total_spent']
+    return total_budget, category_budget, total_budget_remaining, category_spent
 
-def set_table_budgets(db_path, table, budget_val, category_master=False) -> tuple:
+def set_table_budgets(db_path, budget_dict):
     # connect to db with dbpath
     # get table object
     # update table's budget variable
     # Query() all docs with key "budget" and exist as docs inside the master table
         # If master True: add all values together and update the all_tables (category container) budget
     # Return tuple (total_budget, sum_of_tables)
-    pass
+    db = TinyDB(db_path, sort_keys=True, indent=4, separators=(',', ': '))
+    for table_name, budget_value in budget_dict.items():
+        table = db.table(table_name)
+        if table_name == "All_Tables":
+            table.update({"total_budget": budget_value}, doc_ids=[2])
+        else:
+            table.update({"category_budget": budget_value}, doc_ids=[1])
+    db.close()

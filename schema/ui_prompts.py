@@ -62,6 +62,19 @@ def get_current_tables(db_path, display_tables=False) -> dict:
     if not display_tables:
         return table_dict
 
+def get_current_tables_new(db_path):
+    table_options = {}
+    tables = None
+    with TinyDB(db_path) as db:
+        table_set = db.tables()
+        tables = sorted(list(table_set))
+    for i, table in enumerate(tables):
+        if table == "All_Tables":
+            continue
+        table_options[i] = table
+    print(table_options)
+    return table_options
+
 def add_transaction_ui_flow(db_path) -> list:  
     """
     Dynamic iterable [list{dict}].
@@ -72,7 +85,7 @@ def add_transaction_ui_flow(db_path) -> list:
         'Enter the cost of the trasaction | "q" to cancel: ',
         'Enter a description for the transaction (optional) | "q" to cancel: ',
         'Enter the date of the transaction (YYYY-MM-DD) or press Enter for today | "q" to cancel: ',
-        '\n\n--Remaining budget-- \nTotal budget: {remaining_budget} \n{table} budget: {category}\nTotal {table} spent: {category_total}']
+        '\n\n--Remaining budget-- \nRemaining budget: {remaining_budget} \n{table} budget: {category_budget}\nTotal {table} spent: {category_total}']
     categories = get_current_tables(db_path)
     add_transaction_flow.insert(1, categories)
     return add_transaction_flow
@@ -98,8 +111,57 @@ def set_table_budgets_ui(db_path) -> dict:
     }
     return table_budget_ui
 
-
-
-
-
+class SetBudgetUI:
+    def __init__(self,  db_path):
+        print("-SET BUDGETS-")
+        self.db_path = db_path
+        self.master_prompt = "Should the overall budget be the sum of all category budgets? y/n/q"
+        self.select_tables_prompt = "Select a category to set the budget for: "
+        self.master = False
+        self.table_options = get_current_tables_new(self.db_path)
+        self.modifications_to_push = {}        
+        pass
     
+    def total_budget_as_slave(self, action):
+        match action:
+            case "q" | "Q":
+                print("Returning to main menu...")
+                return # may need different method to quit
+            case "y" | "Y":
+                self.master = True
+                return "Total budget will be determined by sum of all categories."
+            case "n" | "N":
+                return "Total budget will be independent of category budgets."
+            case _:
+                return "Invalid input. Using default option [FALSE]."
+    
+    def get_table_from_user(self) -> str:
+        print('\n', '*' * 20)
+        for key, value in self.table_options.items():
+            print(f'{key}: {value}')
+        selected_option = int(input("\nSelect a table to set the budget for:"))
+        selected_table = self.table_options[selected_option]
+        user_budget = float(input(f"\nEnter the budget for {selected_table}: "))
+        self.modifications_to_push[selected_table] = user_budget
+        action = input("Set the budget for another category? y/n/q: ")
+        return action
+    
+    def print_pending_mods(self):
+        print('\n--Budgets to be modified--')
+        print(self.modifications_to_push)
+    
+    def get_total_budget(self):
+        total_budget = 0.0
+        if self.master:
+            for budget in self.modifications_to_push.values():
+                total_budget += budget
+            print(f'Total budget determined by category sum: {total_budget}')
+            self.modifications_to_push["All_Tables"] = total_budget
+        else:
+            action = input("Would you like to set a independent overall budget? (y/n): ")
+            if action in ("y, Y"):
+                total_budget = float(input("Enter the overall budget: "))
+                self.modifications_to_push["All_Tables"] = total_budget
+    
+    def get_table_budget_dict(self) -> dict:
+        return self.modifications_to_push
