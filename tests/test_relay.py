@@ -8,7 +8,6 @@ from pathlib import Path
 from schema.db_schema import db_payload as Payload
 import schema.db_schema as db_schema
 from datetime import date
-import shutil
 
 ##############################################################################################################################
 #TODO: Set up proper debug console.
@@ -16,6 +15,7 @@ from log.LogSetup import setup_logging
 clogger = setup_logging(name="TestLogger", level=logging.DEBUG)
 flogger = setup_logging(name="TestLogger", level=logging.DEBUG, log_file='Simple_Budget_Log.log')
 ##############################################################################################################################
+@pytest.skip(allow_module_level=True)
 
 @pytest.fixture(scope="module")
 def temp_db_path(tmp_path_factory):

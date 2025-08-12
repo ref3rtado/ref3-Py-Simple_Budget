@@ -118,25 +118,25 @@ def add_trasaction(db_path) -> None:
     action = int(input("Select a category by number: ").strip())
     selected_category = list(categories.keys())[action - 1] if 0 < action <= len(categories) else None
     if selected_category:
-        clogger.info(f"User selected category: {selected_category}")
+        clogger.info(f"\nUser selected category: {selected_category}")
         # Add category to payload object
     amount = input(next(ui)).strip()    
     clogger.info(f"User entered amount: {amount}")
     payload = db_payload(table_name=selected_category, cost=float(amount))
     description = input(next(ui)).strip()
     if description:
-        clogger.info(f"User entered description: {description}")
+        clogger.info(f"\nUser entered description: {description}")
         payload.description = description
     else:
-        clogger.info("User did not provide a description, using default.")
+        clogger.info("\nUser did not provide a description, using default.")
     date_input = input(next(ui)).strip()
     if date_input:
-        clogger.info(f"User entered date: {date_input}")
+        clogger.info(f"\nUser entered date: {date_input}")
     else:
         date_input = date.today().isoformat()
-        clogger.info("User did not provide a date, using today's date.")
+        clogger.info("\nUser did not provide a date, using today's date.")
     payload.date = date_input
-    clogger.debug(f"Payload created: {payload.__dict__}")
+    clogger.debug(f"\nPayload created: {payload.__dict__}")
     # Send payload to db_relay.py to add the transaction 
     db.add_transaction(payload, db_path)
     cur_total_budget, cur_category_budget, remaining_total, category_spent = db.get_current_budget_stats(db_path, selected_category)

@@ -187,7 +187,7 @@ def rotate_database(db_path: str=None, archive_path: str=None, custom_params_for
 
 def add_transaction(payload: object, db_path: str) -> None:
     #TODO: Create function to update and return budget totals.
-    db = TinyDB(db_path)
+    db = TinyDB(db_path, sort_keys=True, indent=4, separators=(',', ': '))
     payload_table = payload.get_table_name()
     try:
         db_table = db.table(payload_table)
@@ -216,7 +216,7 @@ def add_transaction(payload: object, db_path: str) -> None:
 
 
 def get_current_budget_stats(db_path, table) -> tuple: 
-    db = TinyDB(db_path)
+    db = TinyDB(db_path, sort_keys=True, indent=4, separators=(',', ': '))
     all_tables = db.table("All_Tables")
     total_budget = all_tables.all()[1].get("total_budget")
     total_spent = all_tables.all()[2].get("total_spent")
