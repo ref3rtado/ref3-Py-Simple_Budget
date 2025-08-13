@@ -1,72 +1,91 @@
-db_list = [
-    "Grocery",
-    "Medical",
-    "Pet",
-    "Restaurants",
-    "Drinks",
-    "Entertainment",
-    "Shopping",
-    "Transportation",
-    "Subscriptions"
-]
-class db_payload:
-    def __init__(self, table_name: str, cost: float, description: str = "", date: str = ""):
+from tinydb import TinyDB, Query
+import logging
+from pathlib import Path
+from datetime import date
+
+###############################################################################
+from log.LogSetup import setup_logging
+clogger = setup_logging(name="db_schema", level=logging.DEBUG)
+###############################################################################
+
+class InitializeNewDatabase:
+    def __init__(self, db_path):
+        self.db_path = db_path
+        self.creation_date = date.today().isoformat()
+        self.tables = None
+        self.total_budget = None
+        self.total_spent = 0.0
+    
+    def set_default_tables(self):
+        default_tables = [
+            "Groceries",
+            "Shopping",
+            "Medical",
+            "Pet",
+            "Restaurants",
+            "Drinks",
+            "Entertainment",
+            "Transportation",
+            "Subscriptsion"
+        ]
+        self.tables = default_tables
+    
+    def set_custom_talbes(self, user_tables: list):
         """
-        Initializes a database payload object with the necessary fields for a transaction.
+        :param user_tables: list | Provide a comma separated list of tables
+            to initialize the database with. 
         
-        :param table_name: The name of the budget category table.
-        :param cost: The cost of the transaction.
-        :param description: A description of the transaction (optional).
-        :param date: The date of the transaction (user defined or current date).
+        Table budgets are set at the main menu.
         """
-        self.table_name = table_name
-        self.cost = cost
-        self.description = description
-        self.date = date
-        #self.pseudo_hash_id = self.get_psuedo_hash(self.table_name, self.cost, self.date)
-
-    def get_psuedo_hash(table_name: str, cost: float, date: str) -> int:
+        self.tables = user_tables
+    
+    def get_tables(self) -> list:
+        return self.tables
+    
+    def use_old_settings(self):
         """
-        Generates a value semi-unique value that can be used to index specific transactions.
-        XXXYYYZZZZ:
-            XXX represents the table; 100 == ALL, Others are index of db_list * 100,000
-            YYY represents the cost; 001 == $0 - $10, 020 = $200 - $219... 
-            ZZZZ represents days since the creation of the database, 
-                9999 states transaction occured before db creation and user chose to not use 0000
-        Examples with db creation of 2025-04-10:
-            Grocery transaction of $50 on 2025-05-11: 1010050031
-            Amazon purchase of $219 on 2025-04-09 (input == "N" (don't use creation date)): 1070219999
-            Code to search ALL transaction of < $10 on 2026-04-10: 1000010365
+        Pull the settings from current db and reuse them for the new db. 
+        Used for db rotation functionality.
         """
-        # TODO: Convert table_name to (index + 1) * 100000
-        # TODO: Convert cost to a 3 digit value based on ranges
-        # TODO: Convert date to a integer representing delta between db creation and transaction date
-        # TODO: Before implementing, run time analysis to see if indexing is quicker than TinyDB query method
+        # Get tables
+        # Get total_budget
+        # Set tables
+        # Set total_budget
         pass
-        return None  # Placeholder for the actual hash generation logic
     
-    def get_table_name(self) -> str:
-        return self.table_name
+    def override_metadata(self, user_date=None, total_spent=None):
+        """
+        :param: user_date mm/dd/yyyy : Set custom creation date
+        :param: total_spent: float | Change total_spent. WARNING:
+            Can potentially cause problems with db operations.
+        """
+        self.creation_date = user_date
+        self.total_spent = total_spent
     
-    def get_payload_data(self, requested_data=None) -> dict:
-        payload_data = {"cost": self.cost,
-                        "description": self.description,
-                        "date": self.date
-        }
-        if requested_data == None:
-            return payload_data
-        else:
-            return payload_data[requested_data]
+    def create_database(self):
+        if Path(self.db_path).exists():
+            raise FileExistsError(f"ERROR: Database already exists at \
+                                  {self.db_path} \n Please use the \
+                                    rotate_db function from main menu.")
+        TinyDB.default_table_name = "metadata"
+        with TinyDB(
+            self.db_path, 
+            sort_keys=True, 
+            indent=4,
+            separators=(',', ': ')) as db:
+            db.insert({
+                'creation_date': self.creation_date,
+                'total_budget': self.total_budget,
+                'total_spent': self.total_spent
+            })
+            for table in self.talbes:
+                current_table = db.table(table)
+                current_table.insert({
+                    'table_name': table,
+                    'category_budget': None,
+                    'total_spent': 0.0
+                })
+                clogger.debug(f'Table "{table}" created in database \
+                              {self.db_path}')
+        pass
 
-def generate_archive_filename(creation_date) -> str:
-    """
-    Keeps the archive filename consistent with the database creation date.
-    """
-    creation_date = creation_date.replace('-', '_')
-    archive_filename = f"db_{creation_date}.json"
-    return archive_filename
-
-if __name__ == "__main__":
-    # Example usage
-    transaction = db_payload(table_name="Grocery", cost="50.00", description="Weekly groceries", date="2023-10-01")
-    print(f"Transaction created: {transaction.table_name}, Cost: {transaction.cost}, Description: {transaction.description}, Date: {transaction.date}")

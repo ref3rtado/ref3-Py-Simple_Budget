@@ -30,9 +30,9 @@ def test_handle_missing_json(temp_paths):
     assert archive_path == None, "Expected: None"
 
 def test_setting_paths_db_only(temp_paths, mock_inputs):
-    responses_noname = ["y", temp_paths["database"], "n"]
+    responses_noname = ["y", str(temp_paths["database"]), "n"]
     path_with_name = Path(temp_paths["database"]) / "db.json"
-    responses_name = ["y", path_with_name, "n"]
+    responses_name = ["y", str(path_with_name), "n"]
     with mock_inputs(responses_noname):
         startup_noname = UI.StartupSequence(temp_paths["cfg"])
         startup_noname.set_paths()
@@ -49,8 +49,8 @@ def test_setting_paths_db_only(temp_paths, mock_inputs):
         
 def test_setting_paths_both(temp_paths, mock_inputs):
     responses_expected_path = [
-        "y", temp_paths["database"], 
-        "y", temp_paths["archive"]
+        "y", str(temp_paths["database"]), 
+        "y", (temp_paths["archive"])
     ]
     bad_archive_path = Path(temp_paths["archive"]) / "db.json"
     responses_bad_path = [
@@ -72,6 +72,12 @@ def test_setting_paths_both(temp_paths, mock_inputs):
         assert archive_path == Path(temp_paths["archive"]), """
         Function needs to strip file name from path.
         """
+
+def test_no_db_at_path(temp_location_json):
+    startup = UI.StartupSequence(temp_location_json)
+    startup.check_location_json()
+    assert startup.validate_path() == False
+
 @pytest.mark.skip
 def test_failure(temp_paths):
     clogger.debug(temp_paths)

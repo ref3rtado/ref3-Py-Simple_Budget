@@ -5,8 +5,8 @@ import logging
 from tinydb import TinyDB, Query
 import database.db_relay as db_relay
 from pathlib import Path
-from schema.db_schema import db_payload as Payload
-import schema.db_schema as db_schema
+#from schema.db_schema import db_payload as Payload
+#import schema.db_schema as db_schema
 from datetime import date
 
 ##############################################################################################################################

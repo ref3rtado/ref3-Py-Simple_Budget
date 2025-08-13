@@ -11,7 +11,7 @@ from datetime import date
 from schema.db_schema import db_list as db_list
 from schema.db_schema import db_payload as db_payload
 import schema.db_schema as db_schema
-import schema.ui_prompts as ui
+#import schema.ui_prompts as ui
 import shutil
 
 

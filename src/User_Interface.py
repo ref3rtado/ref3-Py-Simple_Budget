@@ -20,8 +20,11 @@ class StartupSequence:
         self.cfg_path = test_cfg
     
     def check_location_json(self) -> None:
-        if self.cfg_path: # Primarily for testing
-            self.cfg_path = Path(self.cfg_path) / "db_location.json"
+        if self.cfg_path: # Primarily for testing         
+            if self.cfg_path.is_dir():
+                self.cfg_path = self.cfg_path / "db_location.json"
+            clogger.debug(f'self.cfg_path set to {self.cfg_path}')
+            clogger.debug(f'Does it exist?: {self.cfg_path.exists()}')
         else:
             self.cfg_path = (
                 Path(__file__).parent.parent / "cfg" / "db_location.json"
@@ -43,7 +46,7 @@ class StartupSequence:
                 "archive_path": None
             }
             with open(self.cfg_path, "w") as f:
-                json.dump(payload, indent=4)
+                json.dump(payload, f, indent=4)
     
     def get_paths(self) -> tuple:
         return self.db_path, self.archive_path
@@ -112,7 +115,10 @@ class StartupSequence:
                         "./cfg/db_location.json"
                         )
 
-    def validate_path(self, paths):                    
-        pass
+    def validate_path(self) -> bool:
+        clogger.debug("Checking if db has already been created")
+        clogger.debug(f"Current path: {self.db_path}")                    
+        return Path(self.db_path).exists()
+
 
             
