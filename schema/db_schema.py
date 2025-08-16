@@ -9,7 +9,7 @@ clogger = setup_logging(name="db_schema", level=logging.DEBUG)
 ###############################################################################
 
 class InitializeNewDatabase:
-    def __init__(self, db_path):
+    def __init__(self, db_path: Path):
         self.db_path = db_path
         self.creation_date = date.today().isoformat()
         self.tables = None
@@ -26,7 +26,7 @@ class InitializeNewDatabase:
             "Drinks",
             "Entertainment",
             "Transportation",
-            "Subscriptsion"
+            "Subscriptions"
         ]
         self.tables = default_tables
     
@@ -78,7 +78,7 @@ class InitializeNewDatabase:
                 'total_budget': self.total_budget,
                 'total_spent': self.total_spent
             })
-            for table in self.talbes:
+            for table in self.tables:
                 current_table = db.table(table)
                 current_table.insert({
                     'table_name': table,

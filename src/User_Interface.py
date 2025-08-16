@@ -1,6 +1,7 @@
 from pathlib import Path
 import json
 import logging
+from schema.db_schema import InitializeNewDatabase as NewDB
 
 
 ###############################################################################
@@ -35,8 +36,8 @@ class StartupSequence:
             with open(self.cfg_path, "r") as f:
                 data = json.load(f)
                 clogger.debug(f"json data: {data}")
-                self.db_path = data.get("database_path")
-                self.archive_path = data.get("archive_path")
+                self.db_path = Path(data.get("database_path"))
+                self.archive_path = Path(data.get("archive_path"))
                 print(self.db_path)
                 print(self.archive_path)            
         else:
@@ -115,10 +116,62 @@ class StartupSequence:
                         "./cfg/db_location.json"
                         )
 
-    def validate_path(self) -> bool:
+    def validate_paths(self):
         clogger.debug("Checking if db has already been created")
-        clogger.debug(f"Current path: {self.db_path}")                    
-        return Path(self.db_path).exists()
+        clogger.debug(f"Current path: {self.db_path}")
+        valid_db = Path(self.db_path).exists()
+        valid_archive = Path(self.archive_path).exists()
+        if valid_db == False:
+            raise FileNotFoundError(f"db.json not found at path {self.db_path} \
+                                    Please create or correct the path.")
+        if self.archive_path.exists() == False:
+            print(f'Archive path: {self.archive_path}')
+            action = str(input("Archive directory not found. Create it?"))
+            match action.lower():
+                case "y":
+                    if self.archive_path == None:
+                        self.set_paths()
+                    self.archive_path.mkdir()
+                    valid_archive = self.archive_path.exists()
+                case "n":
+                    valid_archive = False
+                case _:
+                    print('Invalid input. Skipping archive directory creation')
+    
+    def create_first_db(self):
+        action = str(input("[REQUIRED] Create the database file? (y, n): "))
+        match action.lower():
+            case 'n':
+                return
+            case 'y':
+                pass
+            case _: 
+                print("Invalid input. Quitting program...") #TODO, loop until valid input.
+                return
+        db = NewDB(self.db_path)
+        db.set_default_tables()
+        tables = db.get_tables()
+        print('*' * 10, "Create first databse", '*' * 10, '\n')
+        print("Current default tables: ")
+        for table in tables:
+            print(f'-{table}')
+        action = str(input('Use default tables? (y/n): '))
+        match action.lower():
+            case 'n':
+                user_categories = str(
+                    input(
+                        "Please provide comma separated " \
+                        "list of custom categories."
+                    ))
+                user_categories = user_categories.strip().split(',')
+                print("Custom categories set: ")
+                for category in user_categories:
+                    print(category)
+            case 'y':
+                print("Using default categories.")
+        print("Creating db.json...")
+        print("You can set budget limits at the main menu.")
+        db.create_database()
 
 
             

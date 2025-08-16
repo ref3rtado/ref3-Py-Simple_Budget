@@ -3,9 +3,11 @@ import logging
 from tinydb import TinyDB, Query
 import src.User_Interface as UI
 import src.Simple_Budget_v02 as SB
+from schema.db_schema import InitializeNewDatabase as NewDB
 
 from datetime import date
 from pathlib import Path
+import json
 
 
 ###############################################################################
@@ -76,7 +78,50 @@ def test_setting_paths_both(temp_paths, mock_inputs):
 def test_no_db_at_path(temp_location_json):
     startup = UI.StartupSequence(temp_location_json)
     startup.check_location_json()
-    assert startup.validate_path() == False
+    with pytest.raises(FileNotFoundError) as db_missing:
+        db_exists, archive_exists = startup.validate_paths()
+
+def test_db_creation_default_tables(temp_location_json, mock_inputs):
+    """
+    Mock respones:
+        "y": Yes, create a new db.json file
+        "y": Yes, use default tables
+    """
+    responses =["y", "Y"]
+    location_json = Path(temp_location_json)
+    startup = UI.StartupSequence(location_json)
+    startup.check_location_json()
+    with mock_inputs(responses):
+        startup.create_first_db()
+    with open(temp_location_json, 'r') as f:
+        data = json.load(f)
+        db_path = Path(data.get('database_path'))
+    with TinyDB(db_path) as db:
+        expected_tables = {
+            "Groceries",
+            "Shopping",
+            "Medical",
+            "Pet",
+            "Restaurants",
+            "Drinks",
+            "Entertainment",
+            "Transportation",
+            "Subscriptions", 
+            "metadata"
+        }
+        actual_tables = set(db.tables())
+        clogger.debug(f'Expected tables: {expected_tables}')
+        clogger.debug(f'Actual tables: {actual_tables}')
+        clogger.debug(
+            f'Difference in sets: {expected_tables.difference(actual_tables)}'
+        )
+        assert expected_tables.difference(actual_tables) == set(), (
+            "Expected and actual tables should be same, set difference should be empty"
+        )
+        metadata = db.table('metadata')
+        metadata_content = metadata.get(doc_id=1)
+        assert metadata_content.get("total_budget") == None
+        assert metadata_content.get('creation_date') == date.today().isoformat()
 
 @pytest.mark.skip
 def test_failure(temp_paths):
