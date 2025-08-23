@@ -2,6 +2,7 @@ from pathlib import Path
 import json
 import logging
 from schema.db_schema import InitializeNewDatabase as NewDB
+from enum import Enum
 
 
 ###############################################################################
@@ -174,4 +175,39 @@ class StartupSequence:
         db.create_database()
 
 
-            
+class MainMenuOptions(Enum):
+    def __new__(cls, option: str, description: str):
+        obj = object.__new__(cls)
+        obj._value_ = option
+        obj.description = description
+        return obj
+    
+    ADD_TRANSACTION = '1', "Add a transaction"
+    VIEW_TRANSACTIONS = '2', "View recent transactions"
+    VIEW_BALANCE = '3', "View total spent and remaining budget"
+    VIEW_HISTORY = '4', "View historical transactions (>30 days)"
+    MODIFY_BUDGET = '5', "Adjust total budget or category budgets"
+    MODIFY_CATEGORIES = '6', "Add or remove categories"
+    AUTOMATION_FEATURES = '7', "[PENDING]"
+    ROTATE_DB = '8', "Archive the current database and create a new one"
+    EXIT = '9', "Exit the application"
+
+
+class MainMenu:
+    def __init__(self):
+        self.user_selection = None
+        self.menu_options = MainMenuOptions
+        pass 
+
+    def display_main_menu(self):
+        print('*' * 10, "Main Menu", '*' * 10, '\n')
+        for line in MainMenuOptions:
+            print(f'{line.value}. {line.description}')
+        print()
+    
+    def set_user_selection(self):
+        selection = input("\nPlease select an option from the menu: ")
+        clogger.debug(MainMenuOptions(selection))
+        self.user_selection = MainMenuOptions(selection)
+        clogger.debug(f'self.user_selection == {self.user_selection}')
+        pass
