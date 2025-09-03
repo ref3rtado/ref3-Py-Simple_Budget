@@ -1,4 +1,3 @@
-from tinydb import TinyDB, Query
 import logging
 from pathlib import Path
 from datetime import date
@@ -30,7 +29,7 @@ class InitializeNewDatabase:
         ]
         self.tables = default_tables
     
-    def set_custom_talbes(self, user_tables: list):
+    def set_custom_tables(self, user_tables: list):
         """
         :param user_tables: list | Provide a comma separated list of tables
             to initialize the database with. 
@@ -61,33 +60,14 @@ class InitializeNewDatabase:
         """
         self.creation_date = user_date
         self.total_spent = total_spent
-    
-    def create_database(self):
-        if Path(self.db_path).exists():
-            raise FileExistsError(f"ERROR: Database already exists at \
-                                  {self.db_path} \n Please use the \
-                                    rotate_db function from main menu.")
-        TinyDB.default_table_name = "metadata"
-        with TinyDB(
-            self.db_path, 
-            sort_keys=True, 
-            indent=4,
-            separators=(',', ': ')) as db:
-            db.insert({
-                'creation_date': self.creation_date,
-                'total_budget': self.total_budget,
-                'total_spent': self.total_spent
-            })
-            for table in self.tables:
-                current_table = db.table(table)
-                current_table.insert({
-                    'table_name': table,
-                    'category_budget': None,
-                    'total_spent': 0.0
-                })
-                clogger.debug(f'Table "{table}" created in database \
-                              {self.db_path}')
-        pass
+
+    def get_db_properties(self) -> dict:
+        return {
+            "creation_date": self.creation_date,
+            "tables": self.tables,
+            "total_budget": self.total_budget,
+            "total_spent": self.total_spent
+        }
 
 class AddTransactionPayload:
     def __init__(

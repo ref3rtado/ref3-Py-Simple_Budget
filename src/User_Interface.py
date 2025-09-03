@@ -1,8 +1,9 @@
 from pathlib import Path
 import json
 import logging
-from schema.db_schema import InitializeNewDatabase as NewDB
+from schema.db_schema import InitializeNewDatabase as NewDBcfg
 from enum import Enum
+import database.db_relay as DBRelay
 
 
 ###############################################################################
@@ -133,23 +134,23 @@ class StartupSequence:
                     if self.archive_path == None:
                         self.set_paths()
                     self.archive_path.mkdir()
-                    valid_archive = self.archive_path.exists()
                 case "n":
-                    valid_archive = False
+                    print("User chose not to set the archive path.")
                 case _:
-                    print('Invalid input. Skipping archive directory creation')
+                    print('Invalid input. Skipping archive directory creation.')
     
     def create_first_db(self):
         action = str(input("[REQUIRED] Create the database file? (y, n): "))
         match action.lower():
             case 'n':
+                #TODO: Force quit program instead of return
                 return
             case 'y':
                 pass
             case _: 
                 print("Invalid input. Quitting program...") #TODO, loop until valid input.
                 return
-        db = NewDB(self.db_path)
+        db = NewDBcfg(self.db_path)
         db.set_default_tables()
         tables = db.get_tables()
         print('*' * 10, "Create first databse", '*' * 10, '\n')
@@ -165,6 +166,7 @@ class StartupSequence:
                         "list of custom categories."
                     ))
                 user_categories = user_categories.strip().split(',')
+                db.set_custom_tables(user_categories)
                 print("Custom categories set: ")
                 for category in user_categories:
                     print(category)
@@ -172,7 +174,7 @@ class StartupSequence:
                 print("Using default categories.")
         print("Creating db.json...")
         print("You can set budget limits at the main menu.")
-        db.create_database()
+        DBRelay.create_db(self.db_path, db.get_db_properties())
 
 
 class MainMenuOptions(Enum):
