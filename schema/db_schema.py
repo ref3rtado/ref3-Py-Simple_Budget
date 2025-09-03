@@ -89,3 +89,41 @@ class InitializeNewDatabase:
                               {self.db_path}')
         pass
 
+class AddTransactionPayload:
+    def __init__(
+        self,
+        qkadd=False, # Quick Add: Arg based CLI option
+        category=None,
+        cost: float=0.0,
+        desctiption: str = '',
+        account: str = '',
+        date: str = ''
+    ):
+        self.category = category
+        self.cost = cost
+        self.description = desctiption
+        self.account = account
+        self.date = date
+
+        if qkadd:
+            payload = {
+                "table": self.category,
+                "cost": self.cost,
+                "description": self.description,
+                "account": self.account,
+                "date": self.date
+            }
+            clogger.debug(f'Quick Add payload created: {payload}')
+            return payload
+        
+    def set_category(self):
+        pass
+
+    def set_account(self):
+        pass
+
+    def set_transaction_info(self):
+        pass
+
+    def get_payload(self) -> dict:
+        pass

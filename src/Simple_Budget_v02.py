@@ -35,13 +35,66 @@ def main_menu(db_path, archive_path):
     options = main_ui.menu_options
     i = 0
     while main_ui.user_selection != options.EXIT and i < 5:
+        #TODO: Delete i loop condition | Current use prevent infinite loops while deving
         i += 1
         main_ui.display_main_menu()
         main_ui.set_user_selection()
-        execute_selection(main_ui.user_selection.name, db_path, archive_path)
+        execute_selection(main_ui, db_path, archive_path)
 
-def execute_selection(option, db_path, archive_path):
-    # match/case here
+def execute_selection(main_ui, db_path, archive_path):
+    selection = main_ui.menu_options
+    match main_ui.user_selection:
+        case selection.ADD_TRANSACTION:
+            clogger.debug("Add Transaction selected")
+            add_transaction(db_path)
+        case selection.VIEW_TRANSACTIONS:
+            clogger.debug("View transaction selected")
+            view_transactions(db_path)
+        case selection.VIEW_BALANCE:
+            clogger.debug("View budget selected.")
+            view_balance(db_path)
+        case selection.VIEW_HISTORY:
+            clogger.debug("View history selected.")
+            view_history(db_path, archive_path)
+        case selection.MODIFY_BUDGET:
+            clogger.debug("Modify budget selected.")
+            modify_budget(db_path)
+        case selection.MODIFY_CATEGORIES:
+            clogger.debug("Modify categories selected.")
+            modify_categories(db_path)
+        case selection.AUTOMATION_FEATURES:
+            clogger.debug("PLACEHODER")
+            automation_features(db_path)
+        case selection.ROTATE_DB:
+            clogger.debug("Rotate database selected.")
+            rotate_database(db_path, archive_path)
+        case selection.EXIT:
+            clogger.debug("Exit selected. Exiting program.")
+            print("Exiting program...")
+
+
+def add_transaction(db_path):
+    pass
+
+def view_transactions(db_path):
+    pass
+
+def view_balance(db_path):
+    pass
+
+def view_history(db_path, archive_path):
+    pass
+
+def modify_budget(db_path):
+    pass
+
+def modify_categories(db_path):
+    pass
+
+def automation_features(db_path):
+    pass
+
+def rotate_database(db_path, archive_path):
     pass
 
 if __name__ == "__main__":
