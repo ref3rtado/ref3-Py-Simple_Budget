@@ -7,7 +7,7 @@ from log.LogSetup import setup_logging
 clogger = setup_logging(name="db_schema", level=logging.DEBUG)
 ###############################################################################
 
-def create_db(db_path, db_properties) -> None:
+def create_db(db_path: Path, db_properties: dict) -> None:
     TinyDB.default_table_name = "metadata"
     with TinyDB(
         db_path,
@@ -26,6 +26,9 @@ def create_db(db_path, db_properties) -> None:
             current_table = db.table(table)
             current_table.insert({
                 "table_name": table,
-                "cateogry_budget": None,
+                "category_budget": None,
                 "total_spent": 0.0
             })
+
+def insert_transaction(payload: dict):
+    pass

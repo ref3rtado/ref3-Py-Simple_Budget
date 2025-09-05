@@ -60,6 +60,14 @@ class InitializeNewDatabase:
         """
         self.creation_date = user_date
         self.total_spent = total_spent
+    
+    def set_total_budget(self, user_budget: float):
+        try:
+            self.total_budget = float(user_budget)
+        except TypeError as err:
+            print(err)
+            print("Total budget value must be a float.")
+            print("Setting total budget to None")
 
     def get_db_properties(self) -> dict:
         return {

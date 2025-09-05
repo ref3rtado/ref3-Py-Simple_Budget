@@ -3,7 +3,7 @@ import json
 from pathlib import Path
 from unittest.mock import patch
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def temp_paths(tmp_path_factory):
     root_dir = tmp_path_factory.mktemp("root")
     database_dir = root_dir / "database"
@@ -50,5 +50,5 @@ def test_temp_cfg_file_created(temp_location_json, temp_paths):
     assert Path(temp_location_json).exists()
     with open(temp_location_json, "r") as f:
         data = json.load(f)
-        assert data.get("database_path") == Path(temp_paths["database"])
-        assert data.get("archive_path") == Path(temp_paths["archive"])
+        assert data.get("database_path") == str(Path(temp_paths["database"]))
+        assert data.get("archive_path") == str(Path(temp_paths["archive"]))
