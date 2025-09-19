@@ -71,10 +71,16 @@ def execute_selection(main_ui, db_path, archive_path):
         case selection.EXIT:
             clogger.debug("Exit selected. Exiting program.")
             print("Exiting program...")
+        case _:
+            print("Invalid selection, try again.")
 
 
 def add_transaction(db_path):
-    pass
+    ui = UI.AddTransactionUI(db_path)
+    ui.set_category()
+    ui.set_account()
+    ui.set_transaction_info()
+    ui.insert_transaction()
 
 def view_transactions(db_path):
     pass

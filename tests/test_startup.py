@@ -16,7 +16,7 @@ clogger = setup_logging(name="TestLogger", level=logging.DEBUG)
 ###############################################################################
 
 
-pytest.skip_module()
+pytest.skip(allow_module_level=True)
 
 def test_handle_missing_json(temp_paths):
     tmp_cfg = temp_paths["cfg"]

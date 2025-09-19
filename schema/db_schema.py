@@ -14,6 +14,7 @@ class InitializeNewDatabase:
         self.tables = None
         self.total_budget = None
         self.total_spent = 0.0
+        self.accounts = None
     
     def set_default_tables(self):
         default_tables = [
@@ -54,7 +55,7 @@ class InitializeNewDatabase:
     
     def override_metadata(self, user_date=None, total_spent=None):
         """
-        :param: user_date mm/dd/yyyy : Set custom creation date
+        :param: user_date yyyy/mm/dd : Set custom creation date
         :param: total_spent: float | Change total_spent. WARNING:
             Can potentially cause problems with db operations.
         """
@@ -74,7 +75,8 @@ class InitializeNewDatabase:
             "creation_date": self.creation_date,
             "tables": self.tables,
             "total_budget": self.total_budget,
-            "total_spent": self.total_spent
+            "total_spent": self.total_spent,
+            "accounts": self.accounts
         }
 
 class AddTransactionPayload:
@@ -83,13 +85,13 @@ class AddTransactionPayload:
         qkadd=False, # Quick Add: Arg based CLI option
         category=None,
         cost: float=0.0,
-        desctiption: str = '',
+        description: str = '',
         account: str = '',
-        date: str = ''
+        date: date = date.today().isoformat()
     ):
         self.category = category
         self.cost = cost
-        self.description = desctiption
+        self.description = description
         self.account = account
         self.date = date
 
@@ -104,14 +106,19 @@ class AddTransactionPayload:
             clogger.debug(f'Quick Add payload created: {payload}')
             return payload
         
-    def set_category(self):
-        pass
+    def __str__(self):
+        return (f'\nCategory: {self.category} \n' 
+                f'Cost: {self.cost} \n' 
+                f'Description: {self.description} \n'
+                f'Account: {self.account} \n' 
+                f'Date: {self.date} \n'
+                )
 
-    def set_account(self):
-        pass
-
-    def set_transaction_info(self):
-        pass
-
-    def get_payload(self) -> dict:
-        pass
+    def get_payload(self) -> tuple:
+        return (
+            self.category, {
+            "date": self.date,
+            "cost": self.cost,
+            "description": self.description,
+            "account": self.account
+        })

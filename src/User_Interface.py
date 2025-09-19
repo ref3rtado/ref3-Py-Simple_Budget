@@ -1,14 +1,16 @@
 from pathlib import Path
 import json
 import logging
+from datetime import date
 from schema.db_schema import InitializeNewDatabase as NewDBcfg
+from schema.db_schema import AddTransactionPayload
 from enum import Enum
 import database.db_relay as DBRelay
 
 
 ###############################################################################
 from log.LogSetup import setup_logging
-clogger = setup_logging(name="SimpleBudget", level=logging.DEBUG)
+clogger = setup_logging(name="SimpleBudgetUI", level=logging.DEBUG)
 ###############################################################################
 
 
@@ -202,6 +204,7 @@ class MainMenu:
         pass 
 
     def display_main_menu(self):
+        print("\n")
         print('*' * 10, "Main Menu", '*' * 10, '\n')
         for line in MainMenuOptions:
             print(f'{line.value}. {line.description}')
@@ -209,7 +212,122 @@ class MainMenu:
     
     def set_user_selection(self):
         selection = input("\nPlease select an option from the menu: ")
-        clogger.debug(MainMenuOptions(selection))
-        self.user_selection = MainMenuOptions(selection)
-        clogger.debug(f'self.user_selection == {self.user_selection}')
+        try:
+            clogger.debug(MainMenuOptions(selection))
+            self.user_selection = MainMenuOptions(selection)
+            clogger.debug(f'self.user_selection == {self.user_selection}')
+        except ValueError as err:
+            self.user_selection = "BAD_SELECTION"
+            print(f"Invalid selection: {selection}")
         pass
+
+class AddTransactionUI:
+    def __init__(self, db_path: Path):
+        self.db_path = db_path
+        self.payload = AddTransactionPayload()
+        self.db_info = DBRelay.DatabaseInfo(db_path)
+    
+    def set_category(self):
+        #print existing tables (enumerated)
+        table_menu = {}
+        for i, table in enumerate(self.db_info.tables, start=1):
+            table_menu[i] = table
+            print(f'{i}. {table}')
+        selection = int(input(f"\nPlease select a category: "))
+        self.payload.category = table_menu[selection]
+        clogger.debug(f"User selected category: {self.payload.category}") 
+            
+        #get integer selection
+        #set self.payload.category with selection
+        pass
+
+    def set_account(self):
+        if self.db_info.accounts == None:
+            print("No accounts have been specified yet.")
+            selection = input("Enter an account name [optional]: ")
+        else:
+            print('Current accounts: ')
+            account_menu = {}
+            for i, account in enumerate(self.db_info.accounts, start=1):
+                account_menu[i] = account
+                print(f'{i}. {account}')
+            selection = input(
+                f'Select an existing account ' \
+                'or type a new one [optional]: ')
+        try:
+            selection = int(selection)
+            self.payload.account = account_menu[selection]
+        except ValueError:
+            selection = selection.strip().lower()
+            clogger.debug('User input is NaN')
+            account_added = DBRelay.add_account(self.db_path, selection)
+            if account_added:
+                print(f'Added account: {selection}')
+            else:
+                self.payload.account = selection
+                print(f'Account "{selection}" not added. ' \
+                      'Either it\'s an empty string or already exists')
+        
+    def set_transaction_info(self):
+        cost_str = input("Enter the cost of the transaction [$$.cc]: ").strip()
+        if cost_str[0] == "$":
+            clogger.debug
+            cost_str = cost_str[0:]
+        try:
+            cost = float(cost_str)
+        except TypeError as TypeErr:
+            print(f'Could not convert entered value "{cost_str}" to a float')
+            dollar_val = int(input('Enter dollar amount (no cents or "$"): '))
+            cent_val = int(input('Enter cents (no decimal) [optional]: '))
+            cost = float(dollar_val) + float(cent_val / 100)
+            clogger.debug(f"TypeError: Added dollars and cents: {cost}")
+        self.payload.cost = cost
+        transaction_date = input("Enter date of transaction [yyyy/mm/dd]" \
+                                 "(optional): ")
+        if transaction_date:
+            user_date = transaction_date.split("/")
+            transaction_date = date(
+                int(user_date[0]), 
+                int(user_date[1]), 
+                int(user_date[2])
+                ).isoformat()
+            self.payload.date = transaction_date
+        user_description = input("Enter a description (optional): ")
+        if user_description:
+            self.payload.description = user_description
+        
+    
+    def insert_transaction(self):
+        payload = self.payload.get_payload()
+        r = DBRelay.insert_transaction(self.db_path, payload) # Response
+        print(f"Transaction added to {self.payload.category} category.")
+        print("-" * 10, "TOTALS", "-" * 10)
+        print(f"Total spent: ${r["total_spent"]}")
+        if r["total_budget"] is not None:
+            remain = r["total_budget"]
+            remain_statement = (
+                f"Remaining budget (overall): ${remain}" if remain > 0 else (
+                    f"Remaining budget (overall): ${remain} \n !Over Budget!"
+                )
+            )
+            print(remain_statement)
+        else:
+            print("No overall budget currently set.")
+        print(f"{"-" * 10}{self.payload.category.upper()}{"-" * 10}")
+        print(f"Total spent ({self.payload.category}): {r["cat_total_spent"]}")
+        if r["category_budget"] is not None:
+            print(
+                f"Remaining {self.payload.category.upper()} budget:" \
+                f"${r['category_budget']}"
+                )
+        else:
+            print(f"No category budget set for {self.payload.category}")
+
+        
+
+
+
+        
+
+
+        
